@@ -1,0 +1,1237 @@
+---
+title: "Summarize the change of the human stressors over time across Belize & its Coastal Planning Units"
+author: "Jade Delevaux"
+created: October 2022
+output:
+  html_document:
+    df_print: paged
+---
+
+To run this script, install the packages below
+
+```{r Install packages needed for this script}
+library(sf)
+library(foreign)
+library(raster)
+library(rgdal)
+library(dplyr)
+library(exactextractr)
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+library(rgeos)
+library(sp)
+library(ggpubr)
+library(tigris)
+library(maptools)
+library(reshape)
+```
+
+Note: The current working directory (WD) is set to my local drive. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
+
+To calculate the change in area of each human stressors over three timelines (2016, 2020, and 2025), we need the Coastal Planning Unit shapefile and the shapefile of each human stressor per timeline. 
+
+## 1/ Agriculture runoff:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/agric_runoff"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of agriculture runoff}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_agric_runoff.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Runoff"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "agri_tss_2016_km2" 
+names(stressors_area_2016)[5] <- "agri_tss_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/agric_runoff", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of agriculture runoff}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_agric_runoff.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Runoff"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "agri_tss_2020_km2" 
+names(stressors_area_2020)[5] <- "agri_tss_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/agric_runoff", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of agriculture runoff}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_agric_runoff.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Runoff"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "agri_tss_2025_km2" 
+names(stressors_area_2025)[5] <- "agri_tss_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/agric_runoff", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate agriculture runoff change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$agri_tss_2020_km2 - stressors_area_all$agri_tss_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$agri_tss_2025_km2 - stressors_area_all$agri_tss_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_agric_runoff.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_agric_runoff_delta.csv")), row.names = F)
+```
+
+## 2/ Aquaculture:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/aquaculture"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of aquaculture}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_aquaculture.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Aquaculture"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "aqua_2016_km2" 
+names(stressors_area_2016)[5] <- "aqua_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/aquaculture", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of aquaculture}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_aquaculture.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Aquaculture"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "aqua_2020_km2" 
+names(stressors_area_2020)[5] <- "aqua_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/aquaculture", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of aquaculture}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_aquaculture.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Aquaculture"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "aqua_2025_km2" 
+names(stressors_area_2025)[5] <- "aqua_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/aquaculture", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate aquaculture change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$aqua_2020_km2 - stressors_area_all$aqua_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$aqua_2025_km2 - stressors_area_all$aqua_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_aquaculture.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_aquaculture_delta.csv")), row.names = F)
+```
+
+## 3/ Coastal development:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/development"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of development}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_development.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Development"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "dvmt_2016_km2" 
+names(stressors_area_2016)[5] <- "dvmt_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/development", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of development}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_development.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Development"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "dvmt_2020_km2" 
+names(stressors_area_2020)[5] <- "dvmt_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/development", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of development}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_development.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Development"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "dvmt_2025_km2" 
+names(stressors_area_2025)[5] <- "dvmt_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/development", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate development change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$dvmt_2020_km2 - stressors_area_all$dvmt_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$dvmt_2025_km2 - stressors_area_all$dvmt_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_development.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_development_delta.csv")), row.names = F)
+```
+
+## 4/ Dredging:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/dredging"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of dredging}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_dredging.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Dredging"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "dred_2016_km2" 
+names(stressors_area_2016)[5] <- "dred_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/dredging", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of dredging}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_dredging.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Dredging"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "dred_2020_km2" 
+names(stressors_area_2020)[5] <- "dred_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/dredging", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of dredging}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_dredging.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Dredging"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "dred_2025_km2" 
+names(stressors_area_2025)[5] <- "dred_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/dredging", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate dredging change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$dred_2020_km2 - stressors_area_all$dred_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$dred_2025_km2 - stressors_area_all$dred_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_dredging.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_dredging_delta.csv")), row.names = F)
+```
+
+## 5/ Fishing:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/fishing"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of fishing}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_fishing.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Fishing"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "fish_2016_km2" 
+names(stressors_area_2016)[5] <- "fish_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/fishing", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of fishing}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_fishing.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Fishing"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "fish_2020_km2" 
+names(stressors_area_2020)[5] <- "fish_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/fishing", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of fishing}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_fishing.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Fishing"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "fish_2025_km2" 
+names(stressors_area_2025)[5] <- "fish_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/fishing", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate fishing change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$fish_2020_km2 - stressors_area_all$fish_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$fish_2025_km2 - stressors_area_all$fish_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_fishing.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_fishing_delta.csv")), row.names = F)
+```
+
+## 6/ Oil Exploration:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/oil"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of oil}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_oil.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Oil"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "oil_2016_km2" 
+names(stressors_area_2016)[5] <- "oil_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/oil", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of oil}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_oil.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Oil"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "oil_2020_km2" 
+names(stressors_area_2020)[5] <- "oil_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/oil", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of oil}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_oil.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Oil"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "oil_2025_km2" 
+names(stressors_area_2025)[5] <- "oil_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/oil", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate oil change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$oil_2020_km2 - stressors_area_all$oil_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$oil_2025_km2 - stressors_area_all$oil_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_oil.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_oil_delta.csv")), row.names = F)
+```
+
+## 7/ Marine recreation:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/recreation"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of recreation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_recreation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Recreation"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "rec_2016_km2" 
+names(stressors_area_2016)[5] <- "rec_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/recreation", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of recreation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_recreation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Recreation"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "rec_2020_km2" 
+names(stressors_area_2020)[5] <- "rec_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/recreation", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of recreation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_recreation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Recreation"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "rec_2025_km2" 
+names(stressors_area_2025)[5] <- "rec_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/recreation", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate recreation change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$rec_2020_km2 - stressors_area_all$rec_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$rec_2025_km2 - stressors_area_all$rec_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_recreation.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_recreation_delta.csv")), row.names = F)
+```
+
+## 8/ Marine transportation:
+Create a directory to save all the outputs for this timeline
+```{r Create directory}
+dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/transportation"), showWarning=TRUE, recursive=TRUE)
+```
+
+Import the shapefile with the CPU boundaries
+```{r Import the coastal planning units shapefile}
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
+```
+
+```{r Compute 2016 km2 and % of transportation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2016/s0_transportation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Transportation"
+stressors_area$year <- "2016"
+```
+
+```{r Create a 2016 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2016
+names(stressors_area_2016)[4] <- "trans_2016_km2" 
+names(stressors_area_2016)[5] <- "trans_2016_pct" 
+stressors_area_2016 <- stressors_area_2016[,c(1:5)]
+write.csv(stressors_area_2016, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/transportation", paste("stressors_area_2016.csv")), row.names = F)
+stressors_area -> stressors_area_2016_fig
+```
+
+```{r Compute 2020 km2 and % of transportation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2020/s1_transportation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Transportation"
+stressors_area$year <- "2020"
+```
+
+```{r Create a 2020 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2020
+names(stressors_area_2020)[4] <- "trans_2020_km2" 
+names(stressors_area_2020)[5] <- "trans_2020_pct" 
+stressors_area_2020 <- stressors_area_2020[,c(1:5)]
+write.csv(stressors_area_2020, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/transportation", paste("stressors_area_2020.csv")), row.names = F)
+stressors_area -> stressors_area_2020_fig
+```
+
+```{r Compute 2025 km2 and % of transportation}
+stressor <- st_read("E:/GreenFin/01_hra_model/2_stressor_maps/2025/s2_transportation.shp")
+stressor_int_cpu <- st_intersection(stressor, cpu_shp)
+stressor_int_cpu$km2 <- unclass((st_area(stressor_int_cpu))/1000000)
+stressor_int_cpu$km2 <- round(stressor_int_cpu$km2, digits = 1)
+stressors_area <- stressor_int_cpu %>%
+  st_set_geometry(NULL) %>%
+  group_by(cpu) %>%
+  summarise(km2 = sum(km2))
+stressors_area <- left_join(cpu_df,stressors_area, by="cpu")
+stressors_area$km2[is.na(stressors_area$km2)] <- 0
+stressors_area$pct <- round ((stressors_area$km2 /stressors_area$cpu_km2)*100, digits = 1)
+stressors_area$stressor <- "Transportation"
+stressors_area$year <- "2025"
+```
+
+```{r Create a 2025 horizontal & vertical tables w results}
+stressors_area -> stressors_area_2025
+names(stressors_area_2025)[4] <- "trans_2025_km2" 
+names(stressors_area_2025)[5] <- "trans_2025_pct" 
+stressors_area_2025 <- stressors_area_2025[,c(1:5)]
+write.csv(stressors_area_2025, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/transportation", paste("stressors_area_2025.csv")), row.names = F)
+stressors_area -> stressors_area_2025_fig
+```
+
+```{r Calculate transportation change from 2016}
+stressors_area_all <- cbind(stressors_area_2016, stressors_area_2020, stressors_area_2025)
+names(stressors_area_all)
+stressors_area_all <- stressors_area_all[,c(1:5,9:10,14:15)]
+stressors_area_all$dlt_2020 <- stressors_area_all$trans_2020_km2 - stressors_area_all$trans_2016_km2
+stressors_area_all$dlt_2025 <- stressors_area_all$trans_2025_km2 - stressors_area_all$trans_2016_km2
+stressors_area_all$dlt_pct_2020 <- round((stressors_area_all$dlt_2020/stressors_area_all$cpu_km2*100), digits = 1)
+stressors_area_all$dlt_pct_2025 <- round((stressors_area_all$dlt_2025/stressors_area_all$cpu_km2*100), digits = 1)
+write.csv(stressors_area_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("delta_transportation.csv")), row.names = F)
+stressors_area_fig_all <- rbind(stressors_area_2016_fig, stressors_area_2020_fig, stressors_area_2025_fig)
+write.csv(stressors_area_fig_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_transportation_delta.csv")), row.names = F)
+```
+
+## 9/ <ake a summary table for Belize:
+```{r}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+stress_1 <- read.csv("fig_agric_runoff_delta.csv")
+stress_2 <- read.csv("fig_aquaculture_delta.csv")
+stress_3 <- read.csv("fig_development_delta.csv")
+stress_4 <- read.csv("fig_dredging_delta.csv")
+stress_5 <- read.csv("fig_fishing_delta.csv")
+stress_6 <- read.csv("fig_oil_delta.csv")
+stress_7 <- read.csv("fig_recreation_delta.csv")
+stress_8 <- read.csv("fig_transportation_delta.csv")
+stress_all <- rbind(stress_1, stress_2, stress_3, stress_4, stress_5, stress_6, stress_7, stress_8)
+write.csv(stress_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/", paste("fig_all_stressors_delta.csv")), row.names = F)
+```
+
+## 10/ Figures:
+
+```{r Make bar chart for agriculture runoff by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_agric_runoff_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("agric_runoff"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Agriculture Runoff by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_runoff.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for aquaculture by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_aquaculture_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Aquaculture"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Aquaculture by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_aqua.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for development runoff by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_development_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Development"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Coastal Development by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_development.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for dredging by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_dredging_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Dredging"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Dredging by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_dredging.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for fishing by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_fishing_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Fishing"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Fishing by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_fishing.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for oil by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_oil_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Oil"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Oil Exploration by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_oil.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for recreation by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_recreation_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Fishing"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Recreation by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_recreation.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+
+```{r Make bar chart for transportation by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_transportation_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Transportation"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Transportation by Coastal Planning Unit", x = "", y = bquote("Area "(km^2))) +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_transportation.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r figure for Belize showing the change in stressors by year}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_all_stressors_delta.csv")
+# select belize rows only
+results <- results[results$cpu == '10',]
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Runoff","Aquaculture","Development", "Dredging","Fishing","Oil","Recreation","Transportation"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_name <- factor(results$cpu_name,  # Change ordering manually
+                              levels = c("Belize"))
+## set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=km2, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in stressors", x = "", y = bquote("Area "(km^2)), fill = "Years:") +
+  facet_wrap("stressor", scales = "free_y", nrow = 2) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_bz.pdf")),
+    width = 7, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```

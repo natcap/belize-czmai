@@ -1,0 +1,291 @@
+---
+title: "Post process the Recreation models outputs using the habitat maps from 2016"
+author: "Jade Delevaux"
+created: June 2020
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+To run this script, install the packages below
+
+```{r Install packages}
+library(sf)
+library(foreign)
+library(raster)
+library(rgdal)
+library(dplyr)
+library(exactextractr) # quick zonal stat
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+library(rgeos)
+library(sp)
+library(ggpubr)
+library(tigris)
+library(maptools)
+library(reshape)
+```
+
+REC outputs a shapefile map for each scenario (2016 = baseline, 2020 = current, and 2025 = informed management), which shows the visitation patterns in phot-users days across the area of interest. We need to combine those shapefiles to (1) calculate the change in visitation compared to 2016 and (2) summarize the change by coastal planning units.
+
+Set our working directory towards the folder with the REC outputs in our shared Gdrive:
+
+```{r Set the working directory}
+setwd("E:/Greenfin")
+knitr::opts_knit$set(root.dir = 'E:/Greenfin')
+```
+
+Import the results into R workspace
+```{r Import the REC model results}
+rec_output_shp_2016_all <- st_read("E:/Greenfin/03_recreation/rec_outputs/habitats_2016/pud_results_2016_2020.shp")
+rec_output_shp_2020_all <- st_read("E:/Greenfin/03_recreation/rec_outputs/habitats_2016/scenario_results_2016_2020.shp")
+rec_output_shp_2025_all <- st_read("E:/Greenfin/03_recreation/rec_outputs/habitats_2016/scenario_results_2016_2025.shp")
+```
+
+Merge the three files and only keep the visitation data from each file:
+```{r merge all the results}
+names(rec_output_shp_2016_all)
+rec_output_shp_2016 <- rec_output_shp_2016_all[,c(1:7,20)]
+names(rec_output_shp_2016)[7] <- 'PUD2016'
+names(rec_output_shp_2020_all)
+rec_output_shp_2020 <- rec_output_shp_2020_all[,c(14)]
+names(rec_output_shp_2020)[1] <- 'PUD2020'
+names(rec_output_shp_2025_all)
+rec_output_shp_2025 <- rec_output_shp_2025_all[,c(14)]
+names(rec_output_shp_2025)[1] <- 'PUD2025'
+rec_output <- cbind(rec_output_shp_2016, rec_output_shp_2020, rec_output_shp_2025)
+rec_output <- rec_output[,-c(11:12)]
+```
+
+Calculate the total number of person days for 2016, 2020 and 2025, based on the number of visitors from the BTB (refer to CZMAI plan and BTB dashboard):
+```{r calculate total person days}
+total_pud_2016 <- 1007.153846
+total_visitors_2016 <- 2229627
+rec_output$TPD2016 <- rec_output$PUD2016*total_visitors_2016/total_pud_2016
+total_pud_2020 <- 1642.348249
+total_visitors_2020 <- 1263885
+rec_output$TPD2020 <- rec_output$PUD2020*total_visitors_2020/total_pud_2020
+total_pud_2025 <- 1570.754657 
+total_visitors_2025 <- 5471264
+rec_output$TPD2025 <- rec_output$PUD2025*total_visitors_2025/total_pud_2025
+```
+
+Calculate the change in visitation relative to 2016:
+```{r calculate change in person days}
+rec_output$DLT2020 <- rec_output$TPD2020-rec_output$TPD2016
+rec_output$DLT2025 <- rec_output$TPD2025-rec_output$TPD2016
+```
+
+Calculate the percent and number of overnight and cruise visitors for 2016:
+```{r Calculate the percent and number of visitor type in 2016}
+coastal_visitation_factor <- 0.74
+overnight_visitors_2016 <- 277135
+overnight_length_days_2016 <- 8.56
+cruise_visitors_2016 <- 640734
+cruise_length_days_2016 <- 1
+total_visitors_2016 <-2229627
+pct_overnight_visitors_2016 <- (coastal_visitation_factor * overnight_visitors_2016 * overnight_length_days_2016)/total_visitors_2016
+pct_cruise_visitors_2016 <- (coastal_visitation_factor * cruise_visitors_2016 * cruise_length_days_2016)/total_visitors_2016
+```
+
+Calculate the percent and number of overnight and cruise visitors for 2020:
+```{r Calculate the percent and number of visitor type in 2020}
+coastal_visitation_factor <- 0.74
+overnight_visitors_2020 <- 144124
+overnight_length_days_2020 <- 9.47
+cruise_visitors_2020 <- 343099
+cruise_length_days_2020 <- 1
+total_visitors_2020 <-1707953
+pct_overnight_visitors_2020 <- (coastal_visitation_factor * overnight_visitors_2020 * overnight_length_days_2020)/total_visitors_2020
+pct_cruise_visitors_2020 <- (coastal_visitation_factor * cruise_visitors_2020 * cruise_length_days_2020)/total_visitors_2020
+```
+
+Calculate the percent and number of overnight and cruise visitors for 2025:
+```{r Calculate the percent and number of visitor type in 2025}
+coastal_visitation_factor <- 0.74
+overnight_visitors_2025 <- 556000
+overnight_length_days_2025 <- 10.6
+cruise_visitors_2025 <- 1500000
+cruise_length_days_2025 <- 1
+total_visitors_2025 <-5471264
+pct_overnight_visitors_2025 <- (coastal_visitation_factor * overnight_visitors_2025 * overnight_length_days_2025)/total_visitors_2025
+pct_cruise_visitors_2025 <- (coastal_visitation_factor * cruise_visitors_2025 * cruise_length_days_2025)/total_visitors_2025
+```
+
+Calculate the number of overnight and cruise visitors for 2016, 2020 and 2025
+```{r Calculate the number of visitor day type for each scenario}
+rec_output$NIT2016 <- rec_output$TPD2016*pct_overnight_visitors_2016
+rec_output$SHP2016 <- rec_output$TPD2016*pct_cruise_visitors_2016
+rec_output$NIT2020 <- rec_output$TPD2020*pct_overnight_visitors_2020
+rec_output$SHP2020 <- rec_output$TPD2020*pct_cruise_visitors_2020
+rec_output$NIT2025 <- rec_output$TPD2025*pct_overnight_visitors_2025
+rec_output$SHP2025 <- rec_output$TPD2025*pct_cruise_visitors_2025
+```
+
+calculate the annual expenditure per visitor type and for the total number of person-days for 2016,2020, snd 2025:
+```{r Calculate annual expenditure for each scenario}
+overnight_visitor_daily_expenditure_2016 <- 133
+cruise_visitor_daily_expenditure_2016 <- 57
+overnight_visitor_daily_expenditure_2020 <- 153
+cruise_visitor_daily_expenditure_2020 <- 71
+overnight_visitor_daily_expenditure_2025 <- 195
+cruise_visitor_daily_expenditure_2025 <- 83
+rec_output$USD2016 <- rec_output$NIT2016*overnight_visitor_daily_expenditure_2016 + rec_output$SHP2016*cruise_visitor_daily_expenditure_2016
+rec_output$USD2020 <- rec_output$NIT2020*overnight_visitor_daily_expenditure_2020 + rec_output$SHP2020*cruise_visitor_daily_expenditure_2020
+rec_output$USD2025 <- rec_output$NIT2025*overnight_visitor_daily_expenditure_2025 + rec_output$SHP2025*cruise_visitor_daily_expenditure_2025
+```
+
+Export the results into a shapefile and csv table
+```{r Export shp and csv results}
+rec_output_sp <- as(rec_output, "Spatial")
+class(rec_output_sp)
+writeOGR(obj=rec_output_sp, dsn="E:/Greenfin/03_recreation/rec_outputs/habitats_2016", layer="rec_output", driver="ESRI Shapefile", overwrite_layer =  T)
+rec_output <- as.data.frame(rec_output_sp)
+names(rec_output)
+write.csv(rec_output, file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("rec_summary.csv")), row.names = F)
+```
+
+Summarize results by coastal planning units & add the CPU names:
+```{r Summarize results by coastal planning units}
+rec_output$NAME <- as.factor(rec_output$NAME)
+rec_output$NEW_NAME <- as.factor(rec_output$NEW_NAME)
+rec_output_by_cpu <- aggregate(rec_output[,-c(1:6)],rec_output["NAME"],sum)
+CPU_shp <- st_read("E:/Greenfin/_data/base_layers/cp_regions_3km_buffer.shp")
+CPU_df <- as.data.frame(CPU_shp)
+CPU_df$NAME <- as.factor(CPU_df$NAME)
+CPU_df$NEW_NAME <- as.factor(CPU_df$NEW_NAME)
+CPU <- CPU_df[,c(1,3)]
+CPU$CPU <- paste(CPU$NAME,CPU$NEW_NAME,sep= "-")
+rec_output_by_cpu <- cbind(rec_output_by_cpu,CPU, by="NAME")
+rec_output_by_cpu <- rec_output_by_cpu[, c(1,20:21,2:18)]
+write.csv(rec_output_by_cpu, file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("rec_summary_by_cpu.csv")), row.names = F)
+```
+
+Create a dataframe to make a bar chart by coastal planning unit to display change in Total Person Days:
+```{r Create dataframe for Total Person Days by coastal planning units}
+names(rec_output_by_cpu)
+rec_output_by_cpu_tpd_2016 <- rec_output_by_cpu[,c(1:3,7)]
+rec_output_by_cpu_tpd_2016$Year <- "2016" 
+names(rec_output_by_cpu_tpd_2016)
+rec_output_by_cpu_tpd_2016_flip <- melt(rec_output_by_cpu_tpd_2016, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_tpd_2016_flip) 
+names(rec_output_by_cpu_tpd_2016_flip)[6] <- "TPD" 
+rec_output_by_cpu_tpd_2020 <- rec_output_by_cpu[,c(1:3,8)]
+rec_output_by_cpu_tpd_2020$Year <- "2020" 
+names(rec_output_by_cpu_tpd_2020)
+rec_output_by_cpu_tpd_2020_flip <- melt(rec_output_by_cpu_tpd_2020, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_tpd_2020_flip) 
+names(rec_output_by_cpu_tpd_2020_flip)[6] <- "TPD" 
+rec_output_by_cpu_tpd_2025 <- rec_output_by_cpu[,c(1:3,9)]
+rec_output_by_cpu_tpd_2025$Year <- "2025" 
+names(rec_output_by_cpu_tpd_2025)
+rec_output_by_cpu_tpd_2025_flip <- melt(rec_output_by_cpu_tpd_2025, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_tpd_2025_flip) 
+names(rec_output_by_cpu_tpd_2025_flip)[6] <- "TPD" 
+rec_output_by_cpu_tpd <- rbind(rec_output_by_cpu_tpd_2016_flip, rec_output_by_cpu_tpd_2020_flip, rec_output_by_cpu_tpd_2025_flip) 
+rec_output_by_cpu_tpd <- rec_output_by_cpu_tpd[,c(1:4,6)]
+names(rec_output_by_cpu_tpd)
+write.csv(rec_output_by_cpu_tpd, file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("rec_summary_by_cpu_tpd.csv")), row.names = F)
+```
+
+Create a dataframe to make a bar chart by coastal planning unit to display change in Expenditure:
+```{r Create dataframe for Annual Expenditure by coastal planning units}
+names(rec_output_by_cpu)
+rec_output_by_cpu_usd_2016 <- rec_output_by_cpu[,c(1:3,18)]
+rec_output_by_cpu_usd_2016$Year <- "2016" 
+names(rec_output_by_cpu_usd_2016)
+rec_output_by_cpu_usd_2016_flip <- melt(rec_output_by_cpu_usd_2016, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_usd_2016_flip) 
+names(rec_output_by_cpu_usd_2016_flip)[6] <- "USD" 
+rec_output_by_cpu_usd_2020 <- rec_output_by_cpu[,c(1:3,19)]
+rec_output_by_cpu_usd_2020$Year <- "2020" 
+names(rec_output_by_cpu_usd_2020)
+rec_output_by_cpu_usd_2020_flip <- melt(rec_output_by_cpu_usd_2020, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_usd_2020_flip) 
+names(rec_output_by_cpu_usd_2020_flip)[6] <- "USD" 
+rec_output_by_cpu_usd_2025 <- rec_output_by_cpu[,c(1:3,20)]
+rec_output_by_cpu_usd_2025$Year <- "2025" 
+names(rec_output_by_cpu_usd_2025)
+rec_output_by_cpu_usd_2025_flip <- melt(rec_output_by_cpu_usd_2025, id=c("NAME","NEW_NAME","CPU","Year")) 
+str(rec_output_by_cpu_usd_2025_flip) 
+names(rec_output_by_cpu_usd_2025_flip)[6] <- "USD" 
+rec_output_by_cpu_usd <- rbind(rec_output_by_cpu_usd_2016_flip, rec_output_by_cpu_usd_2020_flip, rec_output_by_cpu_usd_2025_flip) 
+rec_output_by_cpu_usd <- rec_output_by_cpu_usd[,c(1:4,6)]
+names(rec_output_by_cpu_usd)
+write.csv(rec_output_by_cpu_usd, file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("rec_summary_by_cpu_usd.csv")), row.names = F)
+```
+
+# Summarize the results into bar charts:
+Create bar chart on Total Person Days by CPU
+```{r Build bar chart on Total Person Days by CPU}
+rec_outputs <- read.csv("E:/Greenfin/03_recreation/rec_outputs/habitats_2016/rec_summary_by_cpu_tpd.csv")
+rec_outputs$REC.model <- factor(rec_outputs$REC.model,
+                                   levels = c("Total Person Days"))
+rec_outputs$Year <- factor(rec_outputs$Year,  
+                          levels = c("2025", "2020", "2016"))
+rec_outputs$CPU <- factor(rec_outputs$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+rec_outputs$TPD <-as.numeric(rec_outputs$TPD)
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+ggbars <- ggplot(rec_outputs) +
+  geom_bar(aes(x=CPU, y=TPD, fill=Year), position="dodge", stat="identity")+
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Total-Person Days", x = "Coastal Planning Units", y = "Total-Person Days") +
+  facet_wrap("REC.model") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 0.7, vjust = 0.8),
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("_barplot_cpu_rec_outputs_tpd.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart on tourism annual expenditure by CPU
+```{r Build bar chart on Annual expenditure by CPU}
+rec_outputs <- read.csv("E:/Greenfin/03_recreation/rec_outputs/habitats_2016/rec_summary_by_cpu_usd.csv")
+rec_outputs$REC.model <- factor(rec_outputs$REC.model,
+                                   levels = c("Tourism Revenue"))
+rec_outputs$USDx10000 <- rec_outputs$USD/10000
+names(rec_outputs)
+rec_outputs$Year <- factor(rec_outputs$Year,
+                           levels = c("2025", "2020", "2016"))
+rec_outputs$CPU <- factor(rec_outputs$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+ggbars <- ggplot(rec_outputs) +
+  geom_bar(aes(x=CPU, y=USDx10000, fill=Year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Tourism Annual Expenditure", x = "Coastal Planning Units", y = "Annual Expenditure (USD x 10,000)") +
+  facet_wrap("REC.model") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 0.7, vjust = 0.8),
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/Greenfin/03_recreation/rec_outputs/habitats_2016", paste("_barplot_cpu_rec_outputs_usd.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Clear the working environment 
+```{r Clear workspace}
+rm(list = ls(all.names=TRUE))
+```

@@ -27,7 +27,7 @@ library(maptools)
 library(reshape)
 ```
 
-Note: THe current working directory (WD) is set to our shared Google drive (i.e., "G:/Shared drives/GreenFin Belize/Science"). Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
+Note: The current working directory (WD) is set to our shared Google drive (i.e., "G:/Shared drives/GreenFin Belize/Science"). Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
 
 # A/ 2016 Habitat maps & 2016 Human stressors:
 
@@ -112,7 +112,7 @@ writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs
 setwd("E:/GreenFin/01_hra_model")
 ```
 
-Note: we need to multiply the raster values by 0.25 because: 1) we run HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+Note: we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
 
 ## 1/ Coral habitat
 
@@ -122,7 +122,7 @@ We import the coral habitat map which was subdivided by coastal planning units s
 corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2016.shp")
 ```
 
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
+We run a zonal statistic on each habitat risk raster created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
 
 ```{r Calculate the area (km2) of habitat under different risk by plannig unit}
 corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
