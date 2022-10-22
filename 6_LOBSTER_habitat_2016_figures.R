@@ -52,7 +52,7 @@ pdf(file.path("E:/GreenFin/04_lobster", paste("_barplot_cpu_lobster_outputs_catc
 plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
 dev.off()
 
-##### B/ Create bar chart - habitat 2010 - Coastal Planning scale - revenue ####
+##### B/ Create bar chart - habitat 2016 - Coastal Planning scale - revenue ####
 setwd("E:/GreenFin/04_lobster/lobster_outputs")
 
 # import dataframe

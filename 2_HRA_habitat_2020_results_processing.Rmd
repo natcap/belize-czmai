@@ -1,0 +1,2707 @@
+---
+title: "Post-processing & summarizing the outputs from the Habitat Risk Assessment (HRA) model using the habitat maps from 2016"
+author: "Jade Delevaux"
+created: September 2022
+output:
+  html_document:
+    df_print: paged
+---
+
+To run this script, install the packages below
+
+```{r Install packages needed for this script}
+library(sf)
+library(foreign)
+library(raster)
+library(rgdal)
+library(dplyr)
+library(exactextractr)
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+library(rgeos)
+library(sp)
+library(ggpubr)
+library(tigris)
+library(maptools)
+library(reshape)
+```
+
+Note: The working directory (WD) needs to reflect your local machine. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
+
+# A/ 2020 Habitat maps & 2016 Human stressors:
+
+HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
+
+## 1/ Coral habitat 
+
+These codes will create three integer raster map for each each risk class of the coral habitat map.
+
+Coral habitat at low, medium, high risk:
+
+```{r Split the risk map for coral habitat into 3 seperate rasters}
+reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_corals.tif")
+risk_corals_none <- reclass_risk_corals==0
+plot(risk_corals_none)
+writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_none_corals.tif", overwrite=TRUE)
+risk_corals_low <- reclass_risk_corals==1
+plot(risk_corals_low)
+writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_low_corals.tif", overwrite=TRUE)
+risk_corals_med <- reclass_risk_corals==2
+plot(risk_corals_med)
+writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_med_corals.tif", overwrite=TRUE)
+risk_corals_hig <- reclass_risk_corals==3
+plot(risk_corals_hig)
+writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_hig_corals.tif", overwrite=TRUE)
+```
+
+## 2/ Seagrass habitat
+
+These codes will create three integer raster map for each each risk class of the seagrass habitat map.
+
+Seagrass habitat at low, medium, and high risk:
+
+```{r Split the risk map for seagrass habitat into 3 seperate rasters}
+reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
+risk_seagrass_none <- reclass_risk_seagrass==0
+plot(risk_seagrass_none)
+writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_none_seagrass.tif", overwrite=TRUE)
+risk_seagrass_low <- reclass_risk_seagrass==1
+plot(risk_seagrass_low)
+writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_low_seagrass.tif", overwrite=TRUE)
+risk_seagrass_med <- reclass_risk_seagrass==2
+plot(risk_seagrass_med)
+writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_med_seagrass.tif", overwrite=TRUE)
+risk_seagrass_hig <- reclass_risk_seagrass==3
+plot(risk_seagrass_hig)
+writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_hig_seagrass.tif", overwrite=TRUE)
+```
+
+## 3/ Mangroves habitat
+
+These codes will create three integer raster map for each each risk class of the mangroves habitat map.
+
+Mangroves habitat at low, medium and high risk:
+
+```{r Split the risk map for mangroves habitat into 3 seperate rasters}
+reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
+risk_mangroves_none <- reclass_risk_mangroves==0
+plot(risk_mangroves_none)
+writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_none_mangroves.tif", overwrite=TRUE)
+risk_mangroves_low <- reclass_risk_mangroves==1
+plot(risk_mangroves_low)
+writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_low_mangroves.tif", overwrite=TRUE)
+risk_mangroves_med <- reclass_risk_mangroves==2
+plot(risk_mangroves_med)
+writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_med_mangroves.tif", overwrite=TRUE)
+risk_mangroves_hig <- reclass_risk_mangroves==3
+plot(risk_mangroves_hig)
+writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_hig_mangroves.tif", overwrite=TRUE)
+```
+
+# B/ Habitat 2020 - Stressors 2016: Calculate the habitat area under each risk class per planning unit
+
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+
+## 1/ Coral habitat
+
+We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
+
+```{r Import the coral habitat shapefile subdivided by coastal planning units}
+corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2020.shp")
+```
+
+We run a zonal statistic on each habitat risk raster created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
+corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
+corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
+corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
+corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
+corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
+corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
+corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile}
+corals_sp <- as(corals, "Spatial")
+class(corals_sp)
+writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
+```
+
+Add a row for the missing Coastal planning units & convert to dataframe: 
+```{r Add rows for missing CPU}
+# convert to dataframe
+corals_risk_summary <- as.data.frame(corals_sp)
+names(corals_risk_summary)
+# create the missing row
+cpu_missing_w_column <- corals_risk_summary[1,]
+names(cpu_missing_w_column)
+cpu_missing_w_column$cpu <- 1
+cpu_missing_w_column$cpu_km2 <- 1425.55
+cpu_missing_w_column$cpu_name <-'Northern Region'
+cpu_missing_w_column$cpu_nameo <-'Northern'
+cpu_missing_w_column$non_km2 <- 0
+cpu_missing_w_column$low_km2 <- 0
+cpu_missing_w_column$med_km2 <- 0
+cpu_missing_w_column$hig_km2 <- 0
+cpu_missing_w_column$non_pct <- 0
+cpu_missing_w_column$low_pct <- 0
+cpu_missing_w_column$med_pct <- 0
+cpu_missing_w_column$hig_pct <- 0
+corals_risk_summary <-  rbind(corals_risk_summary,cpu_missing_w_column)
+# Write the csv file
+write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", paste("risk_summary_corals.csv")), row.names = F)
+```
+
+
+## 2/ Seagrass habitat
+
+We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
+
+```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
+seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2020.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
+seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1) 
+seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
+seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
+seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
+seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
+seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
+seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1) 
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+seagrass_sp <- as(seagrass, "Spatial")
+class(seagrass_sp)
+writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+seagrass_risk_summary <- as.data.frame(seagrass_sp)
+names(seagrass_risk_summary)
+# Write the csv file
+write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", paste("risk_summary_seagrass.csv")), row.names = F)
+```
+
+## 3/ Mangroves habitat
+
+We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
+
+```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
+mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2019.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
+mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1) 
+mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
+mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
+mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
+mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
+mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
+mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1) 
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+mangroves_sp <- as(mangroves, "Spatial")
+class(mangroves_sp)
+writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+mangroves_risk_summary <- as.data.frame(mangroves_sp)
+names(mangroves_risk_summary)
+# Write the csv file
+write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016", paste("risk_summary_mangroves.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# C/ Habitat 2020 - Stressors 2020: Create a map per habitat risk class
+
+HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
+
+## 1/ Coral habitat 
+
+These codes will create three integer raster map for each each risk class of the coral habitat map.
+
+Coral habitat at low, medium, high risk:
+
+```{r Split the risk map for coral habitat into 3 seperate rasters}
+reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_corals.tif")
+risk_corals_none <- reclass_risk_corals==0
+plot(risk_corals_none)
+writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_none_corals.tif", overwrite=TRUE)
+risk_corals_low <- reclass_risk_corals==1
+plot(risk_corals_low)
+writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_low_corals.tif", overwrite=TRUE)
+risk_corals_med <- reclass_risk_corals==2
+plot(risk_corals_med)
+writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_med_corals.tif", overwrite=TRUE)
+risk_corals_hig <- reclass_risk_corals==3
+plot(risk_corals_hig)
+writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_hig_corals.tif", overwrite=TRUE)
+```
+
+## 2/ Seagrass habitat
+
+These codes will create three integer raster map for each each risk class of the seagrass habitat map.
+
+Seagrass habitat at low, medium, and high risk:
+
+```{r Split the risk map for seagrass habitat into 3 seperate rasters}
+reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
+risk_seagrass_none <- reclass_risk_seagrass==0
+plot(risk_seagrass_none)
+writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_none_seagrass.tif", overwrite=TRUE)
+risk_seagrass_low <- reclass_risk_seagrass==1
+plot(risk_seagrass_low)
+writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_low_seagrass.tif", overwrite=TRUE)
+risk_seagrass_med <- reclass_risk_seagrass==2
+plot(risk_seagrass_med)
+writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_med_seagrass.tif", overwrite=TRUE)
+risk_seagrass_hig <- reclass_risk_seagrass==3
+plot(risk_seagrass_hig)
+writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_hig_seagrass.tif", overwrite=TRUE)
+```
+
+## 3/ Mangroves habitat
+
+These codes will create three integer raster map for each each risk class of the mangroves habitat map.
+
+Mangroves habitat at low, medium and high risk:
+
+```{r Split the risk map for mangroves habitat into 3 seperate rasters}
+reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
+risk_mangroves_none <- reclass_risk_mangroves==0
+plot(risk_mangroves_none)
+writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_none_mangroves.tif", overwrite=TRUE)
+risk_mangroves_low <- reclass_risk_mangroves==1
+plot(risk_mangroves_low)
+writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_low_mangroves.tif", overwrite=TRUE)
+risk_mangroves_med <- reclass_risk_mangroves==2
+plot(risk_mangroves_med)
+writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_med_mangroves.tif", overwrite=TRUE)
+risk_mangroves_hig <- reclass_risk_mangroves==3
+plot(risk_mangroves_hig)
+writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_hig_mangroves.tif", overwrite=TRUE)
+```
+
+# D/ Habitat 2020 - Stressors 2020: Calculate the habitat area under each risk class per planning unit
+
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+
+## 1/ Coral habitat
+
+We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
+
+```{r Import the coral habitat shapefile subdivided by coastal planning units}
+corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2020.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
+corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
+corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
+corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
+corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
+corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
+corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
+corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1)
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+corals_sp <- as(corals, "Spatial")
+class(corals_sp)
+writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
+```
+
+Add a row for the missing Coastal planning units & convert to dataframe: 
+```{r Add rows for missing CPU}
+# convert to dataframe
+corals_risk_summary <- as.data.frame(corals_sp)
+names(corals_risk_summary)
+# create the missing row
+cpu_missing_w_column <- corals_risk_summary[1,]
+names(cpu_missing_w_column)
+cpu_missing_w_column$cpu <- 1
+cpu_missing_w_column$cpu_km2 <- 1425.55
+cpu_missing_w_column$cpu_name <-'Northern Region'
+cpu_missing_w_column$cpu_nameo <-'Northern'
+cpu_missing_w_column$non_km2 <- 0
+cpu_missing_w_column$low_km2 <- 0
+cpu_missing_w_column$med_km2 <- 0
+cpu_missing_w_column$hig_km2 <- 0
+cpu_missing_w_column$non_pct <- 0
+cpu_missing_w_column$low_pct <- 0
+cpu_missing_w_column$med_pct <- 0
+cpu_missing_w_column$hig_pct <- 0
+corals_risk_summary <-  rbind(corals_risk_summary,cpu_missing_w_column)
+# Write the csv file
+write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", paste("risk_summary_corals.csv")), row.names = F)
+```
+
+## 2/ Seagrass habitat
+
+We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
+
+```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
+seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2020.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
+seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1)
+seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
+seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
+seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
+seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
+seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
+seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+seagrass_sp <- as(seagrass, "Spatial")
+class(seagrass_sp)
+writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+seagrass_risk_summary <- as.data.frame(seagrass_sp)
+names(seagrass_risk_summary)
+# Write the csv file
+write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", paste("risk_summary_seagrass.csv")), row.names = F)
+```
+
+## 3/ Mangroves habitat
+
+We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
+
+```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
+mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2019.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
+mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1) 
+mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
+mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
+mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
+mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
+mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
+mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+mangroves_sp <- as(mangroves, "Spatial")
+class(mangroves_sp)
+writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+mangroves_risk_summary <- as.data.frame(mangroves_sp)
+names(mangroves_risk_summary)
+# Write the csv file
+write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020", paste("risk_summary_mangroves.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# E/ Habitat 2020 - Stressors 2025: Create a map per habitat risk class
+
+HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
+
+## 1/ Coral habitat 
+
+These codes will create three integer raster map for each each risk class of the coral habitat map.
+
+Coral habitat at low, medium, high risk:
+
+```{r Split the risk map for coral habitat into 3 seperate rasters}
+reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_corals.tif")
+risk_corals_none <- reclass_risk_corals==0
+plot(risk_corals_none)
+writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_none_corals.tif", overwrite=TRUE)
+risk_corals_low <- reclass_risk_corals==1
+plot(risk_corals_low)
+writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_low_corals.tif", overwrite=TRUE)
+risk_corals_med <- reclass_risk_corals==2
+plot(risk_corals_med)
+writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_med_corals.tif", overwrite=TRUE)
+risk_corals_hig <- reclass_risk_corals==3
+plot(risk_corals_hig)
+writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_hig_corals.tif", overwrite=TRUE)
+```
+
+## 2/ Seagrass habitat
+
+These codes will create three integer raster map for each each risk class of the seagrass habitat map.
+
+Seagrass habitat at low, medium, and high risk:
+
+```{r Split the risk map for seagrass habitat into 3 seperate rasters}
+reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
+risk_seagrass_none <- reclass_risk_seagrass==0
+plot(risk_seagrass_none)
+writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_none_seagrass.tif", overwrite=TRUE)
+risk_seagrass_low <- reclass_risk_seagrass==1
+plot(risk_seagrass_low)
+writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_low_seagrass.tif", overwrite=TRUE)
+risk_seagrass_med <- reclass_risk_seagrass==2
+plot(risk_seagrass_med)
+writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_med_seagrass.tif", overwrite=TRUE)
+risk_seagrass_hig <- reclass_risk_seagrass==3
+plot(risk_seagrass_hig)
+writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_hig_seagrass.tif", overwrite=TRUE)
+```
+
+## 3/ Mangroves habitat
+
+These codes will create three integer raster map for each each risk class of the mangroves habitat map.
+
+Mangroves habitat at low, medium and high risk:
+
+```{r Split the risk map for mangroves habitat into 3 seperate rasters}
+reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
+risk_mangroves_none <- reclass_risk_mangroves==0
+plot(risk_mangroves_none)
+writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_none_mangroves.tif", overwrite=TRUE)
+risk_mangroves_low <- reclass_risk_mangroves==1
+plot(risk_mangroves_low)
+writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_low_mangroves.tif", overwrite=TRUE)
+risk_mangroves_med <- reclass_risk_mangroves==2
+plot(risk_mangroves_med)
+writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_med_mangroves.tif", overwrite=TRUE)
+risk_mangroves_hig <- reclass_risk_mangroves==3
+plot(risk_mangroves_hig)
+writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_hig_mangroves.tif", overwrite=TRUE)
+```
+
+# F/ Habitat 2020 - Stressors 2025: Calculate the habitat area under each risk class per planning unit
+
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+
+## 1/ Coral habitat
+
+We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
+
+```{r Import the coral habitat shapefile subdivided by coastal planning units}
+corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2020.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
+corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
+corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
+corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
+corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
+corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
+corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
+corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+corals_sp <- as(corals, "Spatial")
+class(corals_sp)
+writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
+```
+
+Add a row for the missing Coastal planning units & convert to dataframe: 
+```{r Add rows for missing CPU}
+# convert to dataframe
+corals_risk_summary <- as.data.frame(corals_sp)
+names(corals_risk_summary)
+# create the missing row
+cpu_missing_w_column <- corals_risk_summary[1,]
+names(cpu_missing_w_column)
+cpu_missing_w_column$cpu <- 1
+cpu_missing_w_column$cpu_km2 <- 1425.55
+cpu_missing_w_column$cpu_name <-'Northern Region'
+cpu_missing_w_column$cpu_nameo <-'Northern'
+cpu_missing_w_column$non_km2 <- 0
+cpu_missing_w_column$low_km2 <- 0
+cpu_missing_w_column$med_km2 <- 0
+cpu_missing_w_column$hig_km2 <- 0
+cpu_missing_w_column$non_pct <- 0
+cpu_missing_w_column$low_pct <- 0
+cpu_missing_w_column$med_pct <- 0
+cpu_missing_w_column$hig_pct <- 0
+corals_risk_summary <-  rbind(corals_risk_summary,cpu_missing_w_column)
+# Write the csv file
+write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", paste("risk_summary_corals.csv")), row.names = F)
+```
+
+## 2/ Seagrass habitat
+
+We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
+```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
+seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2020.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
+seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1)
+seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
+seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
+seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
+seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
+seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
+seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+seagrass_sp <- as(seagrass, "Spatial")
+class(seagrass_sp)
+writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+seagrass_risk_summary <- as.data.frame(seagrass_sp)
+names(seagrass_risk_summary)
+# Write the csv file
+write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", paste("risk_summary_seagrass.csv")), row.names = F)
+```
+
+## 3/ Mangroves habitat
+
+We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
+
+```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
+mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2019.shp")
+```
+
+We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
+
+```{r Calculate the area (km2) of habitat under different risk by plannig unit}
+mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
+mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1)
+mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
+mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
+mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
+mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
+mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
+mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
+```
+
+We export the shapefile and convert it to a csv table.
+
+```{r Export the shapefile and a csv file}
+mangroves_sp <- as(mangroves, "Spatial")
+class(mangroves_sp)
+writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
+# convert to dataframe
+mangroves_risk_summary <- as.data.frame(mangroves_sp)
+names(mangroves_risk_summary)
+# Write the csv file
+write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025", paste("risk_summary_mangroves.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# G/ Coral: Combine all the scenarios into 1 dataframe
+
+We import the dataframe summarizing the risk onto coral by scenario (2016,2022,2025):
+
+```{r Import the coral dataframes & split them by km2 and pct}
+cor_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_summary_corals.csv") 
+cor_risk_2016_km2 <- cor_risk_2016[,c(1:9)]
+cor_risk_2016_pct <- cor_risk_2016[,c(1:5,10:13)]
+cor_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_summary_corals.csv") 
+cor_risk_2020_km2 <- cor_risk_2020[,c(1:9)]
+cor_risk_2020_pct <- cor_risk_2020[,c(1:5,10:13)]
+cor_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_summary_corals.csv")
+cor_risk_2025_km2 <- cor_risk_2025[,c(1:9)]
+cor_risk_2025_pct <- cor_risk_2025[,c(1:5,10:13)]
+```
+
+Lets build the dataframe for the km2 unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in km2}
+names(cor_risk_2016_km2) 
+names(cor_risk_2016_km2)[6] <- "No Risk"
+names(cor_risk_2016_km2)[7] <- "Low"
+names(cor_risk_2016_km2)[8] <- "Medium" 
+names(cor_risk_2016_km2)[9] <- "High" 
+cor_risk_2016_km2$Year <- "2016" 
+names(cor_risk_2016_km2) 
+mcor_risk_2016 <- melt(cor_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2016) 
+names(mcor_risk_2016)[6] <- "Risk" 
+names(mcor_risk_2016)[7] <- "km2" 
+names(mcor_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in km2}
+names(cor_risk_2020_km2) 
+names(cor_risk_2020_km2)[6] <- "No Risk"
+names(cor_risk_2020_km2)[7] <- "Low"
+names(cor_risk_2020_km2)[8] <- "Medium" 
+names(cor_risk_2020_km2)[9] <- "High" 
+cor_risk_2020_km2$Year <- "2020" 
+names(cor_risk_2020_km2) 
+mcor_risk_2020 <- melt(cor_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2020) 
+names(mcor_risk_2020)[6] <- "Risk" 
+names(mcor_risk_2020)[7] <- "km2" 
+names(mcor_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in km2}
+names(cor_risk_2025_km2) 
+names(cor_risk_2025_km2)[6] <- "No Risk"
+names(cor_risk_2025_km2)[7] <- "Low"
+names(cor_risk_2025_km2)[8] <- "Medium" 
+names(cor_risk_2025_km2)[9] <- "High" 
+cor_risk_2025_km2$Year <- "2025" 
+names(cor_risk_2025_km2) 
+mcor_risk_2025 <- melt(cor_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2025) 
+names(mcor_risk_2025)[6] <- "Risk" 
+names(mcor_risk_2025)[7] <- "km2" 
+names(mcor_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in km2}
+cor_risk_all <- rbind(mcor_risk_2016, mcor_risk_2020, mcor_risk_2025) 
+names(cor_risk_all)  
+write.csv(cor_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_corals.csv")), row.names = F)
+```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(cor_risk_2016_pct) 
+names(cor_risk_2016_pct)[6] <- "No Risk"
+names(cor_risk_2016_pct)[7] <- "Low"
+names(cor_risk_2016_pct)[8] <- "Medium" 
+names(cor_risk_2016_pct)[9] <- "High" 
+cor_risk_2016_pct$Year <- "2016" 
+names(cor_risk_2016_pct) 
+mcor_risk_2016 <- melt(cor_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2016) 
+names(mcor_risk_2016)[6] <- "Risk" 
+names(mcor_risk_2016)[7] <- "pct" 
+names(mcor_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(cor_risk_2020_pct) 
+names(cor_risk_2020_pct)[6] <- "No Risk"
+names(cor_risk_2020_pct)[7] <- "Low"
+names(cor_risk_2020_pct)[8] <- "Medium" 
+names(cor_risk_2020_pct)[9] <- "High" 
+cor_risk_2020_pct$Year <- "2020" 
+names(cor_risk_2020_pct) 
+mcor_risk_2020 <- melt(cor_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2020) 
+names(mcor_risk_2020)[6] <- "Risk" 
+names(mcor_risk_2020)[7] <- "pct" 
+names(mcor_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(cor_risk_2025_pct) 
+names(cor_risk_2025_pct)[6] <- "No Risk"
+names(cor_risk_2025_pct)[7] <- "Low"
+names(cor_risk_2025_pct)[8] <- "Medium" 
+names(cor_risk_2025_pct)[9] <- "High" 
+cor_risk_2025_pct$Year <- "2025" 
+names(cor_risk_2025_pct) 
+mcor_risk_2025 <- melt(cor_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2025) 
+names(mcor_risk_2025)[6] <- "Risk" 
+names(mcor_risk_2025)[7] <- "pct" 
+names(mcor_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+cor_risk_all <- rbind(mcor_risk_2016, mcor_risk_2020, mcor_risk_2025) 
+names(cor_risk_all) # Write the csv file 
+write.csv(cor_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_corals.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# H/ Seagrass: Combine all the scenarios into 1 dataframe
+
+We import the dataframe summarizing the risk onto seagrass by scenario (2016,2022,2025):
+
+```{r Import the seagrass dataframes & split them by km2 and pct}
+sgr_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_summary_seagrass.csv") 
+sgr_risk_2016_km2 <- sgr_risk_2016[,c(1:9)]
+sgr_risk_2016_pct <- sgr_risk_2016[,c(1:5,10:13)]
+sgr_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_summary_seagrass.csv") 
+sgr_risk_2020_km2 <- sgr_risk_2020[,c(1:9)]
+sgr_risk_2020_pct <- sgr_risk_2020[,c(1:5,10:13)]
+sgr_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_summary_seagrass.csv")
+sgr_risk_2025_km2 <- sgr_risk_2025[,c(1:9)]
+sgr_risk_2025_pct <- sgr_risk_2025[,c(1:5,10:13)]
+```
+
+Lets build the dataframe for the km2 unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in km2}
+names(sgr_risk_2016_km2) 
+names(sgr_risk_2016_km2)[6] <- "No Risk"
+names(sgr_risk_2016_km2)[7] <- "Low"
+names(sgr_risk_2016_km2)[8] <- "Medium" 
+names(sgr_risk_2016_km2)[9] <- "High" 
+sgr_risk_2016_km2$Year <- "2016" 
+names(sgr_risk_2016_km2) 
+msgr_risk_2016 <- melt(sgr_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2016) 
+names(msgr_risk_2016)[6] <- "Risk" 
+names(msgr_risk_2016)[7] <- "km2" 
+names(msgr_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in km2}
+names(sgr_risk_2020_km2) 
+names(sgr_risk_2020_km2)[6] <- "No Risk"
+names(sgr_risk_2020_km2)[7] <- "Low"
+names(sgr_risk_2020_km2)[8] <- "Medium" 
+names(sgr_risk_2020_km2)[9] <- "High" 
+sgr_risk_2020_km2$Year <- "2020" 
+names(sgr_risk_2020_km2) 
+msgr_risk_2020 <- melt(sgr_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2020) 
+names(msgr_risk_2020)[6] <- "Risk" 
+names(msgr_risk_2020)[7] <- "km2" 
+names(msgr_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in km2}
+names(sgr_risk_2025_km2) 
+names(sgr_risk_2025_km2)[6] <- "No Risk"
+names(sgr_risk_2025_km2)[7] <- "Low"
+names(sgr_risk_2025_km2)[8] <- "Medium" 
+names(sgr_risk_2025_km2)[9] <- "High" 
+sgr_risk_2025_km2$Year <- "2025" 
+names(sgr_risk_2025_km2) 
+msgr_risk_2025 <- melt(sgr_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2025) 
+names(msgr_risk_2025)[6] <- "Risk" 
+names(msgr_risk_2025)[7] <- "km2" 
+names(msgr_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in km2}
+sgr_risk_all <- rbind(msgr_risk_2016, msgr_risk_2020, msgr_risk_2025) 
+names(sgr_risk_all) # Write the csv file 
+write.csv(sgr_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_seagrass.csv")), row.names = F)
+```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(sgr_risk_2016_pct) 
+names(sgr_risk_2016_pct)[6] <- "No Risk"
+names(sgr_risk_2016_pct)[7] <- "Low"
+names(sgr_risk_2016_pct)[8] <- "Medium" 
+names(sgr_risk_2016_pct)[9] <- "High" 
+sgr_risk_2016_pct$Year <- "2016" 
+names(sgr_risk_2016_pct) 
+msgr_risk_2016 <- melt(sgr_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2016) 
+names(msgr_risk_2016)[6] <- "Risk" 
+names(msgr_risk_2016)[7] <- "pct" 
+names(msgr_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(sgr_risk_2020_pct) 
+names(sgr_risk_2020_pct)[6] <- "No Risk"
+names(sgr_risk_2020_pct)[7] <- "Low"
+names(sgr_risk_2020_pct)[8] <- "Medium" 
+names(sgr_risk_2020_pct)[9] <- "High" 
+sgr_risk_2020_pct$Year <- "2020" 
+names(sgr_risk_2020_pct) 
+msgr_risk_2020 <- melt(sgr_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2020) 
+names(msgr_risk_2020)[6] <- "Risk" 
+names(msgr_risk_2020)[7] <- "pct" 
+names(msgr_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(sgr_risk_2025_pct) 
+names(sgr_risk_2025_pct)[6] <- "No Risk"
+names(sgr_risk_2025_pct)[7] <- "Low"
+names(sgr_risk_2025_pct)[8] <- "Medium" 
+names(sgr_risk_2025_pct)[9] <- "High" 
+sgr_risk_2025_pct$Year <- "2025" 
+names(sgr_risk_2025_pct) 
+msgr_risk_2025 <- melt(sgr_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2025) 
+names(msgr_risk_2025)[6] <- "Risk" 
+names(msgr_risk_2025)[7] <- "pct" 
+names(msgr_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+sgr_risk_all <- rbind(msgr_risk_2016, msgr_risk_2020, msgr_risk_2025) 
+names(sgr_risk_all) # Write the csv file 
+write.csv(sgr_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_seagrass.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# I/ Mangroves: Combine all the scenarios into 1 dataframe
+
+We import the dataframe summarizing the risk onto mangroves by scenario (2016,2022,2025):
+
+```{r Import the mangroves dataframes & split them by km2 and pct}
+mgv_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/risk_summary_mangroves.csv") 
+mgv_risk_2016_km2 <- mgv_risk_2016[,c(1:9)]
+mgv_risk_2016_pct <- mgv_risk_2016[,c(1:5,10:13)]
+mgv_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/risk_summary_mangroves.csv") 
+mgv_risk_2020_km2 <- mgv_risk_2020[,c(1:9)]
+mgv_risk_2020_pct <- mgv_risk_2020[,c(1:5,10:13)]
+mgv_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/risk_summary_mangroves.csv")
+mgv_risk_2025_km2 <- mgv_risk_2025[,c(1:9)]
+mgv_risk_2025_pct <- mgv_risk_2025[,c(1:5,10:13)]
+```
+
+Lets build the dataframe for the km2 unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in km2}
+names(mgv_risk_2016_km2) 
+names(mgv_risk_2016_km2)[6] <- "No Risk"
+names(mgv_risk_2016_km2)[7] <- "Low"
+names(mgv_risk_2016_km2)[8] <- "Medium" 
+names(mgv_risk_2016_km2)[9] <- "High" 
+mgv_risk_2016_km2$Year <- "2016" 
+names(mgv_risk_2016_km2) 
+mmgv_risk_2016 <- melt(mgv_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2016) 
+names(mmgv_risk_2016)[6] <- "Risk" 
+names(mmgv_risk_2016)[7] <- "km2" 
+names(mmgv_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in km2}
+names(mgv_risk_2020_km2) 
+names(mgv_risk_2020_km2)[6] <- "No Risk"
+names(mgv_risk_2020_km2)[7] <- "Low"
+names(mgv_risk_2020_km2)[8] <- "Medium" 
+names(mgv_risk_2020_km2)[9] <- "High" 
+mgv_risk_2020_km2$Year <- "2020" 
+names(mgv_risk_2020_km2) 
+mmgv_risk_2020 <- melt(mgv_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2020) 
+names(mmgv_risk_2020)[6] <- "Risk" 
+names(mmgv_risk_2020)[7] <- "km2" 
+names(mmgv_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in km2}
+names(mgv_risk_2025_km2) 
+names(mgv_risk_2025_km2)[6] <- "No Risk"
+names(mgv_risk_2025_km2)[7] <- "Low"
+names(mgv_risk_2025_km2)[8] <- "Medium" 
+names(mgv_risk_2025_km2)[9] <- "High" 
+mgv_risk_2025_km2$Year <- "2025" 
+names(mgv_risk_2025_km2) 
+mmgv_risk_2025 <- melt(mgv_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2025) 
+names(mmgv_risk_2025)[6] <- "Risk" 
+names(mmgv_risk_2025)[7] <- "km2" 
+names(mmgv_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in km2}
+mgv_risk_all <- rbind(mmgv_risk_2016, mmgv_risk_2020, mmgv_risk_2025) 
+names(mgv_risk_all) # Write the csv file 
+write.csv(mgv_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_mangroves.csv")), row.names = F)
+```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(mgv_risk_2016_pct) 
+names(mgv_risk_2016_pct)[6] <- "No Risk"
+names(mgv_risk_2016_pct)[7] <- "Low"
+names(mgv_risk_2016_pct)[8] <- "Medium" 
+names(mgv_risk_2016_pct)[9] <- "High" 
+mgv_risk_2016_pct$Year <- "2016" 
+names(mgv_risk_2016_pct) 
+mmgv_risk_2016 <- melt(mgv_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2016) 
+names(mmgv_risk_2016)[6] <- "Risk" 
+names(mmgv_risk_2016)[7] <- "pct" 
+names(mmgv_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(mgv_risk_2020_pct) 
+names(mgv_risk_2020_pct)[6] <- "No Risk"
+names(mgv_risk_2020_pct)[7] <- "Low"
+names(mgv_risk_2020_pct)[8] <- "Medium" 
+names(mgv_risk_2020_pct)[9] <- "High" 
+mgv_risk_2020_pct$Year <- "2020" 
+names(mgv_risk_2020_pct) 
+mmgv_risk_2020 <- melt(mgv_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2020) 
+names(mmgv_risk_2020)[6] <- "Risk" 
+names(mmgv_risk_2020)[7] <- "pct" 
+names(mmgv_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(mgv_risk_2025_pct) 
+names(mgv_risk_2025_pct)[6] <- "No Risk"
+names(mgv_risk_2025_pct)[7] <- "Low"
+names(mgv_risk_2025_pct)[8] <- "Medium" 
+names(mgv_risk_2025_pct)[9] <- "High" 
+mgv_risk_2025_pct$Year <- "2025" 
+names(mgv_risk_2025_pct) 
+mmgv_risk_2025 <- melt(mgv_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2025) 
+names(mmgv_risk_2025)[6] <- "Risk" 
+names(mmgv_risk_2025)[7] <- "pct" 
+names(mmgv_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+mgv_risk_all <- rbind(mmgv_risk_2016, mmgv_risk_2020, mmgv_risk_2025) 
+names(mgv_risk_all) # Write the csv file 
+write.csv(mgv_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_mangroves.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# J/ Create dataframes at Belize scale
+
+Subset the full dataframe to extract the results for the entire country for each habitat type and for the two units (km2 and %): 
+
+```{r Belize results for Coral in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_corals_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Coral in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_corals_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Seagrass in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_seagrass_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Seagrass in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_seagrass_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Mangroves in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_mangroves_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Mangroves in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_mangroves_bz.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+
+# K/ Create dataframes at coastal planning units scale
+
+Subset the full dataframe to extract the results for the coastal planning units for each habitat type and for the two units (km2 and %): 
+
+```{r CPU results for Coral in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_corals_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Coral in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_corals_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Seagrass in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_seagrass_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Seagrass in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_seagrass_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Mangroves in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_km2_by_scenario_mangroves_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Mangroves in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_pct_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("risk_pct_by_scenario_mangroves_cpu.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+
+# L/ Calculate functional habitat at the Belize scale
+
+We calculate the functional habitat for the entire country, for each habitat type:
+
+```{r Calculate functional habitat for Coral}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_corals_bz.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2*1
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)*0.5
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_coral
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_corals_bz.csv")), row.names = F)
+```
+
+```{r Calculate functional habitat for Seagrass}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_seagrass_bz.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2*1
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)*0.5
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_seagrass
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_seagrass_bz.csv")), row.names = F)
+```
+
+```{r Calculate functional habitat for Mangroves}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_mangroves_bz.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2*1
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)*0.5
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_mangroves
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_mangroves_bz.csv")), row.names = F)
+```
+
+Last we combine the functiona habitat for each habitat into one database to create a barchart Refer to HRA_figure script)
+```{r Combine the functional habitat for the 3 habitats into 1 database}
+functional_hab_sum_coral$Habitat <- "Corals" 
+functional_hab_sum_seagrass$Habitat <- "Seagrasses"
+functional_hab_sum_mangroves$Habitat <- "Mangroves"
+functional_hab_sum_bz <- rbind(functional_hab_sum_coral,functional_hab_sum_seagrass,functional_hab_sum_mangroves)
+functional_hab_sum_bz <- functional_hab_sum_bz[, c(4,1,3)]
+write.csv(functional_hab_sum_bz, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_bz.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# M/ Calculate functional habitat at the Coastal Planning Unit scale
+
+We calculate the functional habitat by coastal planning unit, for each habitat type:
+
+```{r Calculate functional habitat for Coral}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_corals_cpu.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2*1
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)*0.5
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_coral
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_corals_cpu.csv")), row.names = F)
+```
+
+```{r Calculate functional habitat for Seagrass}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_seagrass_cpu.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)/2
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_seagrass
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_seagrass_cpu.csv")), row.names = F)
+```
+
+```{r Calculate functional habitat for Mangroves}
+habitat_risk <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/risk_km2_by_scenario_mangroves_cpu.csv")
+habitat_risk$Risk <- as.factor(habitat_risk$Risk)
+target <- c('No Risk','Low') 
+risk_low <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_low$func_hab = risk_low$km2
+target <- c('Medium') 
+risk_med <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_med$func_hab <- (risk_med$km2)/2
+target <- c('High') 
+risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
+risk_hig$func_hab <- (risk_hig$km2)*0
+functional_hab <- rbind(risk_low, risk_med, risk_hig)
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum -> functional_hab_sum_mangroves
+write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_mangroves_cpu.csv")), row.names = F)
+```
+
+Last we combine the functional habitat for each habitat into one database to create a barchart Refer to HRA_figure script)
+```{r Combine the functional habitat for the 3 habitats into 1 database}
+functional_hab_sum_coral$Habitat <- "Corals" 
+functional_hab_sum_seagrass$Habitat <- "Seagrasses"
+functional_hab_sum_mangroves$Habitat <- "Mangroves"
+functional_hab_sum_cpu <- rbind(functional_hab_sum_coral,functional_hab_sum_seagrass,functional_hab_sum_mangroves)
+functional_hab_sum_cpu <- functional_hab_sum_cpu[, c(6,1:5)]
+write.csv(functional_hab_sum_cpu, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("functional_habitat_km2_by_scenario_cpu.csv")), row.names = F)
+```
+
+We completed this section so we can clear our working environment
+
+```{r Clear the working environment}
+rm(list = ls(all.names=TRUE))
+```
+
+# N/ Summarize the Habitat Risk results into bar charts:
+
+Create bar chart habitat risk - Belize scale - Coral
+```{r Belize scale - Coral habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_bz.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1,6,11),]
+hab_risk$Year <- factor(hab_risk$Year,
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                                levels = c("No Risk","Low", "Medium", "High"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=Risk, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "", y = bquote("Area "(km^2)), fill = "Risk Level:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.y = element_text(size = 12, face="bold"), 
+      axis.text = element_text(size = 12, color = "black"),
+      strip.text.x = element_text(size = 12),
+      legend.title = element_text(colour="black", size=12, face="bold"),
+      legend.text = element_text(colour="black", size=12),
+      legend.position="bottom")
+  plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_1_barplot_bz_hab_risk_corals.pdf")),
+    width = 6, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart habitat risk - Belize scale - Seagrass 
+```{r Belize scale - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_bz.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1,6,11),]
+hab_risk$Year <- factor(hab_risk$Year,
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,
+                        levels = c("No Risk","Low", "Medium", "High"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=Risk, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "", y = bquote("Area "(km^2)), fill = "Risk Level:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_2_barplot_bz_hab_risk_seagrass.pdf")),
+    width = 6, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart habitat risk - Belize scale - Mangroves
+```{r Belize scale - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_bz.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1,6,11),]
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                        levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                        levels = c("No Risk","Low", "Medium", "High"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=Risk, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangroves Habitat", x = "", y = bquote("Area "(km^2)), fill = "Risk Level:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_3_barplot_bz_hab_risk_mangroves.pdf")),
+    width = 6, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart habitat risk - Coastal Planning Unit scale - Corals
+```{r Coastal Planning Unit scale - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Units", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #1 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #1 
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('1')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_1.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #2 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #2
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('2')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("2-Ambergris Caye"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_2.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #3 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #3
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('3')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("3-Caye Caulker"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_3.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #4 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #4
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('4')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("4-Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_4.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #5 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #5
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('5')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("5-Turneffe Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_5.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #6 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #6
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('6')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("6-Lighthouse Reef Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_6.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #7 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #7
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('7')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("7-South Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_7.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #8 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #8
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('8')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("8-South Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_8.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #9 - Corals habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #9
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('9')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Coral Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_4_barplot_cpu_hab_risk_corals_9.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart habitat risk - Coastal Planning scale - Seagrass
+```{r Coastal Planning Unit scale - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+hab_risk$Year <- factor(hab_risk$Year,
+                        levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,
+                        levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Units", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #1 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #1 
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('1')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_1.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #2 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #2
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('2')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("2-Ambergris Caye"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_2.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #3 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #3
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('3')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("3-Caye Caulker"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_3.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #4 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #4
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('4')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("4-Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_4.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #5 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #5
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('5')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("5-Turneffe Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_5.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #6 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #6
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('6')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("6-Lighthouse Reef Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_6.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #7 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #7
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('7')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("7-South Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_7.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #8 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #8
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('8')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("8-South Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_8.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #9 - Seagrass habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #9
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('9')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Seagrass Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_5_barplot_cpu_hab_risk_seagrass_9.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart habitat risk - Coastal Planning scale - Mangroves
+```{r Coastal Planning Unit scale - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+hab_risk$Year <- factor(hab_risk$Year,
+                        levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  
+                        levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangroves Habitat", x = "Coastal Planning Units", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #1 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #1 
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('1')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("1-Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_1.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #2 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #2
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('2')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("2-Ambergris Caye"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_2.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #3 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #3
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('3')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("3-Caye Caulker"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_3.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #4 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #4
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('4')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("4-Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_4.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #5 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #5
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('5')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("5-Turneffe Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_5.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #6 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #6
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('6')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("6-Lighthouse Reef Atoll"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_6.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #7 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #7
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('7')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("7-South Northern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_7.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #8 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #8
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('8')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("8-South Central Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_8.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Coastal Planning Unit scale #9 - Mangroves habitat risk bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
+names(hab_risk)
+hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
+# select rows where CPU = #9
+hab_risk$cpu <- as.factor(hab_risk$cpu)
+target <- c('9')
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
+hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
+                          levels = c("High", "Medium", "Low","No Risk"))
+hab_risk$CPU <- factor(hab_risk$CPU,  # Change ordering manually
+                          levels = c("9-Southern Region"))
+riskycols <- c("grey","#0066CC", "#FFCC00", "red3")
+names(riskycols) <- c("No Risk","Low", "Medium", "High")
+ggbars <- ggplot(hab_risk) +
+  geom_bar(aes(x=CPU, y=km2, fill=Risk), position="dodge", stat="identity") +
+  scale_fill_manual(values=riskycols) +
+  labs(title = "Mangrove Habitat", x = "Coastal Planning Unit", y = bquote("Area "(km^2)), fill = "Risk:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_6_barplot_cpu_hab_risk_mangroves_9.pdf")),
+    width = 8.5, height = 2.5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+# O/ Summarize the Functional Habitat results into bar charts:
+
+Create bar chart functional habitat - Belize scale
+```{r Belize scale - Functional habitats bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_functional <- read.csv("functional_habitat_km2_by_scenario_bz.csv")
+names(hab_functional)
+hab_functional$Habitat <- factor(hab_functional$Habitat,
+                              levels = c("Corals", "Mangroves", "Seagrasses"))
+hab_functional$Year <- factor(hab_functional$Year,
+                        levels = c("2016", "2020", "2025"))
+hab_functional$km2 <- round(hab_functional$km2)
+habcols <- c("coral", "black", "darkgreen")
+names(habcols) <- c("Corals", "Mangroves", "Seagrasses")
+ggbars <- ggplot(hab_functional) +
+  geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity") +
+  scale_fill_manual(values=habcols) +
+  labs(title = "Functional Habitat", x = "", y = bquote("Area "(km^2)), fill = "Habitats:") +
+  facet_wrap("Year") +
+  geom_text(data=hab_functional,aes(x=Habitat,y=km2,label=km2), 
+            position=position_dodge(width=0.9),vjust=-0.15) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text.y = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_7_barplot_bz_hab_functional.pdf")),
+    width = 5, height = 4.5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+Create bar chart functional habitat - Coastal Planning scale
+```{r Coastal planning unit scale - Functional habitats bar chart}
+setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats")
+hab_functional <- read.csv("functional_habitat_km2_by_scenario_cpu.csv")
+names(hab_functional)
+hab_functional$Habitat <- factor(hab_functional$Habitat,
+                                 levels = c("Corals", "Mangroves", "Seagrasses"))
+hab_functional$Year <- factor(hab_functional$Year,
+                              levels = c("2016", "2020", "2025"))
+hab_functional$CPU <- factor(hab_functional$CPU,
+                          levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+habcols <- c("coral", "black", "darkgreen")
+names(habcols) <- c("Corals", "Mangroves", "Seagrasses")
+ggbars <- ggplot(hab_functional) +
+  geom_bar(aes(x=CPU, y=km2, fill=Habitat), position="dodge", stat="identity") +
+  scale_fill_manual(values=habcols) +
+  labs(title = "Functional Habitat", x = "Coastal Planning Units", y = bquote("Area "(km^2)), fill = "Habitats:") +
+  facet_wrap("Year") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats", paste("Fig_8_barplot_cpu_hab_functional.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+

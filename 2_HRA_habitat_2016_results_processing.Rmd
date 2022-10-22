@@ -27,18 +27,11 @@ library(maptools)
 library(reshape)
 ```
 
-Note: The current working directory (WD) is set to our shared Google drive (i.e., "G:/Shared drives/GreenFin Belize/Science"). Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
+Note: The working directory (WD) needs to reflect your local machine. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
 
 # A/ 2016 Habitat maps & 2016 Human stressors:
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs")
-knitr::opts_knit$set(root.dir='E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs')
-```
 
 ## 1/ Coral habitat 
 
@@ -108,11 +101,7 @@ writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs
 
 # B/ Habitat 2016 - Stressors 2016: Calculate the habitat area under each risk class per planning unit
 
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model")
-```
-
-Note: we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
 
 ## 1/ Coral habitat
 
@@ -133,6 +122,14 @@ corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
 corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
 corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
 corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
 ```
 
 We export the shapefile and convert it to a csv table.
@@ -169,6 +166,14 @@ seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
 seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -203,6 +208,14 @@ mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
 mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -225,12 +238,6 @@ rm(list = ls(all.names=TRUE))
 # C/ Habitat 2016 - Stressors 2020: Create a map per habitat risk class
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model/5_hra_outputs")
-```
 
 ## 1/ Coral habitat 
 
@@ -300,11 +307,7 @@ writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs
 
 # D/ Habitat 2016 - Stressors 2020: Calculate the habitat area under each risk class per planning unit
 
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model")
-```
-
-Note: we need to multiply the raster values by 0.25 because: 1) we run HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
 
 ## 1/ Coral habitat
 
@@ -325,6 +328,14 @@ corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
 corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
 corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
 corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
 ```
 
 We export the shapefile and convert it to a csv table.
@@ -361,6 +372,14 @@ seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
 seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -395,6 +414,14 @@ mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
 mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -417,12 +444,6 @@ rm(list = ls(all.names=TRUE))
 # E/ Habitat 2016 - Stressors 2025: Create a map per habitat risk class
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model/5_hra_outputs")
-```
 
 ## 1/ Coral habitat 
 
@@ -492,11 +513,7 @@ writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs
 
 # F/ Habitat 2016 - Stressors 2025: Calculate the habitat area under each risk class per planning unit
 
-```{r Set the working directory}
-setwd("E:/GreenFin/01_hra_model")
-```
-
-Note: we need to multiply the raster values by 0.25 because: 1) we run HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
+Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
 
 ## 1/ Coral habitat
 
@@ -517,6 +534,14 @@ corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
 corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
 corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
 corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+```
+
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1)
 ```
 
 We export the shapefile and convert it to a csv table.
@@ -553,6 +578,14 @@ seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
 seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1) 
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -587,6 +620,14 @@ mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
 mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
 ```
 
+Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
+```{r Convert the km2 into percent change of the total plannig unit area}
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1) 
+```
+
 We export the shapefile and convert it to a csv table.
 
 ```{r Export the shapefile and a csv file}
@@ -610,40 +651,48 @@ rm(list = ls(all.names=TRUE))
 
 We import the dataframe summarizing the risk onto coral by scenario (2016,2022,2025):
 
-```{r Import the coral dataframes}
+```{r Import the coral dataframes & split them by km2 and pct}
 cor_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_summary_corals.csv") 
+cor_risk_2016_km2 <- cor_risk_2016[,c(1:9)]
+cor_risk_2016_pct <- cor_risk_2016[,c(1:5,10:13)]
 cor_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_summary_corals.csv") 
+cor_risk_2020_km2 <- cor_risk_2020[,c(1:9)]
+cor_risk_2020_pct <- cor_risk_2020[,c(1:5,10:13)]
 cor_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_summary_corals.csv")
+cor_risk_2025_km2 <- cor_risk_2025[,c(1:9)]
+cor_risk_2025_pct <- cor_risk_2025[,c(1:5,10:13)]
 ```
+
+Lets build the dataframe for the km2 unit: 
 
 First, we rename the columns & flip the dataframe for the 2016 scenario
 
-```{r Melt the 2016 dataframe}
-names(cor_risk_2016) 
-names(cor_risk_2016)[6] <- "No Risk"
-names(cor_risk_2016)[7] <- "Low"
-names(cor_risk_2016)[8] <- "Medium" 
-names(cor_risk_2016)[9] <- "High" 
-cor_risk_2016$Year <- "2016" 
-names(cor_risk_2016) 
-mcor_risk_2016 <- melt(cor_risk_2016, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2016 dataframe in km2}
+names(cor_risk_2016_km2) 
+names(cor_risk_2016_km2)[6] <- "No Risk"
+names(cor_risk_2016_km2)[7] <- "Low"
+names(cor_risk_2016_km2)[8] <- "Medium" 
+names(cor_risk_2016_km2)[9] <- "High" 
+cor_risk_2016_km2$Year <- "2016" 
+names(cor_risk_2016_km2) 
+mcor_risk_2016 <- melt(cor_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mcor_risk_2016) 
 names(mcor_risk_2016)[6] <- "Risk" 
 names(mcor_risk_2016)[7] <- "km2" 
 names(mcor_risk_2016)
 ```
 
-Then, we rename the columns & flip the dataframe for the 2022 scenario
+Then, we rename the columns & flip the dataframe for the 2020 scenario
 
-```{r Melt the 2020 dataframe}
-names(cor_risk_2020) 
-names(cor_risk_2020)[6] <- "No Risk"
-names(cor_risk_2020)[7] <- "Low"
-names(cor_risk_2020)[8] <- "Medium" 
-names(cor_risk_2020)[9] <- "High" 
-cor_risk_2020$Year <- "2020" 
-names(cor_risk_2020) 
-mcor_risk_2020 <- melt(cor_risk_2020, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2020 dataframe in km2}
+names(cor_risk_2020_km2) 
+names(cor_risk_2020_km2)[6] <- "No Risk"
+names(cor_risk_2020_km2)[7] <- "Low"
+names(cor_risk_2020_km2)[8] <- "Medium" 
+names(cor_risk_2020_km2)[9] <- "High" 
+cor_risk_2020_km2$Year <- "2020" 
+names(cor_risk_2020_km2) 
+mcor_risk_2020 <- melt(cor_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mcor_risk_2020) 
 names(mcor_risk_2020)[6] <- "Risk" 
 names(mcor_risk_2020)[7] <- "km2" 
@@ -652,15 +701,15 @@ names(mcor_risk_2020)
 
 Then, we rename the columns & flip the dataframe for the 2025 scenario
 
-```{r Melt the 2025 dataframe}
-names(cor_risk_2025) 
-names(cor_risk_2025)[6] <- "No Risk"
-names(cor_risk_2025)[7] <- "Low"
-names(cor_risk_2025)[8] <- "Medium" 
-names(cor_risk_2025)[9] <- "High" 
-cor_risk_2025$Year <- "2025" 
-names(cor_risk_2025) 
-mcor_risk_2025 <- melt(cor_risk_2025, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2025 dataframe in km2}
+names(cor_risk_2025_km2) 
+names(cor_risk_2025_km2)[6] <- "No Risk"
+names(cor_risk_2025_km2)[7] <- "Low"
+names(cor_risk_2025_km2)[8] <- "Medium" 
+names(cor_risk_2025_km2)[9] <- "High" 
+cor_risk_2025_km2$Year <- "2025" 
+names(cor_risk_2025_km2) 
+mcor_risk_2025 <- melt(cor_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mcor_risk_2025) 
 names(mcor_risk_2025)[6] <- "Risk" 
 names(mcor_risk_2025)[7] <- "km2" 
@@ -669,11 +718,73 @@ names(mcor_risk_2025)
 
 We combine the 3 scenarios:
 
-```{r Combine and export the summary results}
+```{r Combine and export the summary results in km2}
 cor_risk_all <- rbind(mcor_risk_2016, mcor_risk_2020, mcor_risk_2025) 
 names(cor_risk_all) # Write the csv file 
 write.csv(cor_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_corals.csv")), row.names = F)
 ```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(cor_risk_2016_pct) 
+names(cor_risk_2016_pct)[6] <- "No Risk"
+names(cor_risk_2016_pct)[7] <- "Low"
+names(cor_risk_2016_pct)[8] <- "Medium" 
+names(cor_risk_2016_pct)[9] <- "High" 
+cor_risk_2016_pct$Year <- "2016" 
+names(cor_risk_2016_pct) 
+mcor_risk_2016 <- melt(cor_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2016) 
+names(mcor_risk_2016)[6] <- "Risk" 
+names(mcor_risk_2016)[7] <- "pct" 
+names(mcor_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(cor_risk_2020_pct) 
+names(cor_risk_2020_pct)[6] <- "No Risk"
+names(cor_risk_2020_pct)[7] <- "Low"
+names(cor_risk_2020_pct)[8] <- "Medium" 
+names(cor_risk_2020_pct)[9] <- "High" 
+cor_risk_2020_pct$Year <- "2020" 
+names(cor_risk_2020_pct) 
+mcor_risk_2020 <- melt(cor_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2020) 
+names(mcor_risk_2020)[6] <- "Risk" 
+names(mcor_risk_2020)[7] <- "pct" 
+names(mcor_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(cor_risk_2025_pct) 
+names(cor_risk_2025_pct)[6] <- "No Risk"
+names(cor_risk_2025_pct)[7] <- "Low"
+names(cor_risk_2025_pct)[8] <- "Medium" 
+names(cor_risk_2025_pct)[9] <- "High" 
+cor_risk_2025_pct$Year <- "2025" 
+names(cor_risk_2025_pct) 
+mcor_risk_2025 <- melt(cor_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mcor_risk_2025) 
+names(mcor_risk_2025)[6] <- "Risk" 
+names(mcor_risk_2025)[7] <- "pct" 
+names(mcor_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+cor_risk_all <- rbind(mcor_risk_2016, mcor_risk_2020, mcor_risk_2025) 
+names(cor_risk_all) # Write the csv file 
+write.csv(cor_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_corals.csv")), row.names = F)
+```
+
 We completed this section so we can clear our working environment
 
 ```{r Clear the working environment}
@@ -684,40 +795,48 @@ rm(list = ls(all.names=TRUE))
 
 We import the dataframe summarizing the risk onto seagrass by scenario (2016,2022,2025):
 
-```{r Import the seagrass dataframes}
+```{r Import the seagrass dataframes & split them by km2 and pct}
 sgr_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_summary_seagrass.csv") 
+sgr_risk_2016_km2 <- sgr_risk_2016[,c(1:9)]
+sgr_risk_2016_pct <- sgr_risk_2016[,c(1:5,10:13)]
 sgr_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_summary_seagrass.csv") 
+sgr_risk_2020_km2 <- sgr_risk_2020[,c(1:9)]
+sgr_risk_2020_pct <- sgr_risk_2020[,c(1:5,10:13)]
 sgr_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_summary_seagrass.csv")
+sgr_risk_2025_km2 <- sgr_risk_2025[,c(1:9)]
+sgr_risk_2025_pct <- sgr_risk_2025[,c(1:5,10:13)]
 ```
+
+Lets build the dataframe for the km2 unit: 
 
 First, we rename the columns & flip the dataframe for the 2016 scenario
 
-```{r Melt the 2016 dataframe}
-names(sgr_risk_2016) 
-names(sgr_risk_2016)[6] <- "No Risk"
-names(sgr_risk_2016)[7] <- "Low"
-names(sgr_risk_2016)[8] <- "Medium" 
-names(sgr_risk_2016)[9] <- "High" 
-sgr_risk_2016$Year <- "2016" 
-names(sgr_risk_2016) 
-msgr_risk_2016 <- melt(sgr_risk_2016, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2016 dataframe in km2}
+names(sgr_risk_2016_km2) 
+names(sgr_risk_2016_km2)[6] <- "No Risk"
+names(sgr_risk_2016_km2)[7] <- "Low"
+names(sgr_risk_2016_km2)[8] <- "Medium" 
+names(sgr_risk_2016_km2)[9] <- "High" 
+sgr_risk_2016_km2$Year <- "2016" 
+names(sgr_risk_2016_km2) 
+msgr_risk_2016 <- melt(sgr_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(msgr_risk_2016) 
 names(msgr_risk_2016)[6] <- "Risk" 
 names(msgr_risk_2016)[7] <- "km2" 
 names(msgr_risk_2016)
 ```
 
-Then, we rename the columns & flip the dataframe for the 2022 scenario
+Then, we rename the columns & flip the dataframe for the 2020 scenario
 
-```{r Melt the 2020 dataframe}
-names(sgr_risk_2020) 
-names(sgr_risk_2020)[6] <- "No Risk"
-names(sgr_risk_2020)[7] <- "Low"
-names(sgr_risk_2020)[8] <- "Medium" 
-names(sgr_risk_2020)[9] <- "High" 
-sgr_risk_2020$Year <- "2020" 
-names(sgr_risk_2020) 
-msgr_risk_2020 <- melt(sgr_risk_2020, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2020 dataframe in km2}
+names(sgr_risk_2020_km2) 
+names(sgr_risk_2020_km2)[6] <- "No Risk"
+names(sgr_risk_2020_km2)[7] <- "Low"
+names(sgr_risk_2020_km2)[8] <- "Medium" 
+names(sgr_risk_2020_km2)[9] <- "High" 
+sgr_risk_2020_km2$Year <- "2020" 
+names(sgr_risk_2020_km2) 
+msgr_risk_2020 <- melt(sgr_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(msgr_risk_2020) 
 names(msgr_risk_2020)[6] <- "Risk" 
 names(msgr_risk_2020)[7] <- "km2" 
@@ -726,15 +845,15 @@ names(msgr_risk_2020)
 
 Then, we rename the columns & flip the dataframe for the 2025 scenario
 
-```{r Melt the 2025 dataframe}
-names(sgr_risk_2025) 
-names(sgr_risk_2025)[6] <- "No Risk"
-names(sgr_risk_2025)[7] <- "Low"
-names(sgr_risk_2025)[8] <- "Medium" 
-names(sgr_risk_2025)[9] <- "High" 
-sgr_risk_2025$Year <- "2025" 
-names(sgr_risk_2025) 
-msgr_risk_2025 <- melt(sgr_risk_2025, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2025 dataframe in km2}
+names(sgr_risk_2025_km2) 
+names(sgr_risk_2025_km2)[6] <- "No Risk"
+names(sgr_risk_2025_km2)[7] <- "Low"
+names(sgr_risk_2025_km2)[8] <- "Medium" 
+names(sgr_risk_2025_km2)[9] <- "High" 
+sgr_risk_2025_km2$Year <- "2025" 
+names(sgr_risk_2025_km2) 
+msgr_risk_2025 <- melt(sgr_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(msgr_risk_2025) 
 names(msgr_risk_2025)[6] <- "Risk" 
 names(msgr_risk_2025)[7] <- "km2" 
@@ -743,10 +862,71 @@ names(msgr_risk_2025)
 
 We combine the 3 scenarios:
 
-```{r Combine & export the summary results}
+```{r Combine and export the summary results in km2}
 sgr_risk_all <- rbind(msgr_risk_2016, msgr_risk_2020, msgr_risk_2025) 
 names(sgr_risk_all) # Write the csv file 
 write.csv(sgr_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_seagrass.csv")), row.names = F)
+```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(sgr_risk_2016_pct) 
+names(sgr_risk_2016_pct)[6] <- "No Risk"
+names(sgr_risk_2016_pct)[7] <- "Low"
+names(sgr_risk_2016_pct)[8] <- "Medium" 
+names(sgr_risk_2016_pct)[9] <- "High" 
+sgr_risk_2016_pct$Year <- "2016" 
+names(sgr_risk_2016_pct) 
+msgr_risk_2016 <- melt(sgr_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2016) 
+names(msgr_risk_2016)[6] <- "Risk" 
+names(msgr_risk_2016)[7] <- "pct" 
+names(msgr_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(sgr_risk_2020_pct) 
+names(sgr_risk_2020_pct)[6] <- "No Risk"
+names(sgr_risk_2020_pct)[7] <- "Low"
+names(sgr_risk_2020_pct)[8] <- "Medium" 
+names(sgr_risk_2020_pct)[9] <- "High" 
+sgr_risk_2020_pct$Year <- "2020" 
+names(sgr_risk_2020_pct) 
+msgr_risk_2020 <- melt(sgr_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2020) 
+names(msgr_risk_2020)[6] <- "Risk" 
+names(msgr_risk_2020)[7] <- "pct" 
+names(msgr_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(sgr_risk_2025_pct) 
+names(sgr_risk_2025_pct)[6] <- "No Risk"
+names(sgr_risk_2025_pct)[7] <- "Low"
+names(sgr_risk_2025_pct)[8] <- "Medium" 
+names(sgr_risk_2025_pct)[9] <- "High" 
+sgr_risk_2025_pct$Year <- "2025" 
+names(sgr_risk_2025_pct) 
+msgr_risk_2025 <- melt(sgr_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(msgr_risk_2025) 
+names(msgr_risk_2025)[6] <- "Risk" 
+names(msgr_risk_2025)[7] <- "pct" 
+names(msgr_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+sgr_risk_all <- rbind(msgr_risk_2016, msgr_risk_2020, msgr_risk_2025) 
+names(sgr_risk_all) # Write the csv file 
+write.csv(sgr_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_seagrass.csv")), row.names = F)
 ```
 
 We completed this section so we can clear our working environment
@@ -757,42 +937,48 @@ rm(list = ls(all.names=TRUE))
 
 # I/ Mangroves: Combine all the scenarios into 1 dataframe
 
-We import the dataframe summarizing the risk onto mangroves by scenario (2016,2022,2025):
-
-```{r Import the mangroves dataframes}
+```{r Import the mangroves dataframes & split them by km2 and pct}
 mgv_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_summary_mangroves.csv") 
+mgv_risk_2016_km2 <- mgv_risk_2016[,c(1:9)]
+mgv_risk_2016_pct <- mgv_risk_2016[,c(1:5,10:13)]
 mgv_risk_2020 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_summary_mangroves.csv") 
+mgv_risk_2020_km2 <- mgv_risk_2020[,c(1:9)]
+mgv_risk_2020_pct <- mgv_risk_2020[,c(1:5,10:13)]
 mgv_risk_2025 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_summary_mangroves.csv")
+mgv_risk_2025_km2 <- mgv_risk_2025[,c(1:9)]
+mgv_risk_2025_pct <- mgv_risk_2025[,c(1:5,10:13)]
 ```
+
+Lets build the dataframe for the km2 unit: 
 
 First, we rename the columns & flip the dataframe for the 2016 scenario
 
-```{r Melt the 2016 dataframe}
-names(mgv_risk_2016) 
-names(mgv_risk_2016)[6] <- "No Risk"
-names(mgv_risk_2016)[7] <- "Low"
-names(mgv_risk_2016)[8] <- "Medium" 
-names(mgv_risk_2016)[9] <- "High" 
-mgv_risk_2016$Year <- "2016" 
-names(mgv_risk_2016) 
-mmgv_risk_2016 <- melt(mgv_risk_2016, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2016 dataframe in km2}
+names(mgv_risk_2016_km2) 
+names(mgv_risk_2016_km2)[6] <- "No Risk"
+names(mgv_risk_2016_km2)[7] <- "Low"
+names(mgv_risk_2016_km2)[8] <- "Medium" 
+names(mgv_risk_2016_km2)[9] <- "High" 
+mgv_risk_2016_km2$Year <- "2016" 
+names(mgv_risk_2016_km2) 
+mmgv_risk_2016 <- melt(mgv_risk_2016_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mmgv_risk_2016) 
 names(mmgv_risk_2016)[6] <- "Risk" 
 names(mmgv_risk_2016)[7] <- "km2" 
 names(mmgv_risk_2016)
 ```
 
-Then, we rename the columns & flip the dataframe for the 2022 scenario
+Then, we rename the columns & flip the dataframe for the 2020 scenario
 
-```{r Melt the 2020 dataframe}
-names(mgv_risk_2020) 
-names(mgv_risk_2020)[6] <- "No Risk"
-names(mgv_risk_2020)[7] <- "Low"
-names(mgv_risk_2020)[8] <- "Medium" 
-names(mgv_risk_2020)[9] <- "High" 
-mgv_risk_2020$Year <- "2020" 
-names(mgv_risk_2020) 
-mmgv_risk_2020 <- melt(mgv_risk_2020, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2020 dataframe in km2}
+names(mgv_risk_2020_km2) 
+names(mgv_risk_2020_km2)[6] <- "No Risk"
+names(mgv_risk_2020_km2)[7] <- "Low"
+names(mgv_risk_2020_km2)[8] <- "Medium" 
+names(mgv_risk_2020_km2)[9] <- "High" 
+mgv_risk_2020_km2$Year <- "2020" 
+names(mgv_risk_2020_km2) 
+mmgv_risk_2020 <- melt(mgv_risk_2020_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mmgv_risk_2020) 
 names(mmgv_risk_2020)[6] <- "Risk" 
 names(mmgv_risk_2020)[7] <- "km2" 
@@ -801,15 +987,15 @@ names(mmgv_risk_2020)
 
 Then, we rename the columns & flip the dataframe for the 2025 scenario
 
-```{r Melt the 2025 dataframe}
-names(mgv_risk_2025) 
-names(mgv_risk_2025)[6] <- "No Risk"
-names(mgv_risk_2025)[7] <- "Low"
-names(mgv_risk_2025)[8] <- "Medium" 
-names(mgv_risk_2025)[9] <- "High" 
-mgv_risk_2025$Year <- "2025" 
-names(mgv_risk_2025) 
-mmgv_risk_2025 <- melt(mgv_risk_2025, id=c("NAME","NEW_NAME","OLD_NAME","habitat","Year")) 
+```{r Melt the 2025 dataframe in km2}
+names(mgv_risk_2025_km2) 
+names(mgv_risk_2025_km2)[6] <- "No Risk"
+names(mgv_risk_2025_km2)[7] <- "Low"
+names(mgv_risk_2025_km2)[8] <- "Medium" 
+names(mgv_risk_2025_km2)[9] <- "High" 
+mgv_risk_2025_km2$Year <- "2025" 
+names(mgv_risk_2025_km2) 
+mmgv_risk_2025 <- melt(mgv_risk_2025_km2, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
 str(mmgv_risk_2025) 
 names(mmgv_risk_2025)[6] <- "Risk" 
 names(mmgv_risk_2025)[7] <- "km2" 
@@ -818,10 +1004,71 @@ names(mmgv_risk_2025)
 
 We combine the 3 scenarios:
 
-```{r Export the summary results}
+```{r Combine and export the summary results in km2}
 mgv_risk_all <- rbind(mmgv_risk_2016, mmgv_risk_2020, mmgv_risk_2025) 
 names(mgv_risk_all) # Write the csv file 
 write.csv(mgv_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_mangroves.csv")), row.names = F)
+```
+
+Lets build the dataframe for the percent unit: 
+
+First, we rename the columns & flip the dataframe for the 2016 scenario
+
+```{r Melt the 2016 dataframe in pct}
+names(mgv_risk_2016_pct) 
+names(mgv_risk_2016_pct)[6] <- "No Risk"
+names(mgv_risk_2016_pct)[7] <- "Low"
+names(mgv_risk_2016_pct)[8] <- "Medium" 
+names(mgv_risk_2016_pct)[9] <- "High" 
+mgv_risk_2016_pct$Year <- "2016" 
+names(mgv_risk_2016_pct) 
+mmgv_risk_2016 <- melt(mgv_risk_2016_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2016) 
+names(mmgv_risk_2016)[6] <- "Risk" 
+names(mmgv_risk_2016)[7] <- "pct" 
+names(mmgv_risk_2016)
+```
+
+Then, we rename the columns & flip the dataframe for the 2020 scenario
+
+```{r Melt the 2020 dataframe in pct}
+names(mgv_risk_2020_pct) 
+names(mgv_risk_2020_pct)[6] <- "No Risk"
+names(mgv_risk_2020_pct)[7] <- "Low"
+names(mgv_risk_2020_pct)[8] <- "Medium" 
+names(mgv_risk_2020_pct)[9] <- "High" 
+mgv_risk_2020_pct$Year <- "2020" 
+names(mgv_risk_2020_pct) 
+mmgv_risk_2020 <- melt(mgv_risk_2020_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2020) 
+names(mmgv_risk_2020)[6] <- "Risk" 
+names(mmgv_risk_2020)[7] <- "pct" 
+names(mmgv_risk_2020)
+```
+
+Then, we rename the columns & flip the dataframe for the 2025 scenario
+
+```{r Melt the 2025 dataframe in pct}
+names(mgv_risk_2025_pct) 
+names(mgv_risk_2025_pct)[6] <- "No Risk"
+names(mgv_risk_2025_pct)[7] <- "Low"
+names(mgv_risk_2025_pct)[8] <- "Medium" 
+names(mgv_risk_2025_pct)[9] <- "High" 
+mgv_risk_2025_pct$Year <- "2025" 
+names(mgv_risk_2025_pct) 
+mmgv_risk_2025 <- melt(mgv_risk_2025_pct, id=c("cpu","cpu_name","cpu_nameo","habitat","Year")) 
+str(mmgv_risk_2025) 
+names(mmgv_risk_2025)[6] <- "Risk" 
+names(mmgv_risk_2025)[7] <- "pct" 
+names(mmgv_risk_2025)
+```
+
+We combine the 3 scenarios:
+
+```{r Combine and export the summary results in pct}
+mgv_risk_all <- rbind(mmgv_risk_2016, mmgv_risk_2020, mmgv_risk_2025) 
+names(mgv_risk_all) # Write the csv file 
+write.csv(mgv_risk_all, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_mangroves.csv")), row.names = F)
 ```
 
 We completed this section so we can clear our working environment
@@ -832,32 +1079,60 @@ rm(list = ls(all.names=TRUE))
 
 # J/ Create dataframes at Belize scale
 
-Subset the full dataframe to extract the results for the entire country for each habitat type: 
-```{r Belize results for Coral}
+Subset the full dataframe to extract the results for the entire country for each habitat type and for the two units (km2 and %): 
+
+```{r Belize results for Coral in km2}
 risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_corals.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 10 = BZ 
 target <- c('10')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
+bz_df <- risk_df[risk_df$cpu %in% target,] 
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_corals_bz.csv")), row.names = F)
 ```
 
-```{r Belize results for Seagrass}
-risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_seagrass.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+```{r Belize results for Coral in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 10 = BZ 
 target <- c('10')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_corals_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Seagrass in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_seagrass_bz.csv")), row.names = F)
 ```
 
-```{r Belize results for Mangroves}
-risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_mangroves.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+```{r Belize results for Seagrass in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 10 = BZ 
 target <- c('10')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_seagrass_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Mangroves in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_mangroves_bz.csv")), row.names = F)
+```
+
+```{r Belize results for Mangroves in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 10 = BZ 
+target <- c('10')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_mangroves_bz.csv")), row.names = F)
 ```
 
 We completed this section so we can clear our working environment
@@ -869,39 +1144,72 @@ rm(list = ls(all.names=TRUE))
 
 # K/ Create dataframes at coastal planning units scale
 
-Subset the full dataframe to extract the results for the coastal planning units for each habitat type:
+Subset the full dataframe to extract the results for the coastal planning units for each habitat type and for the two units (km2 and %): 
 
-```{r CPU results for Coral}
+```{r CPU results for Coral in km2}
 risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_corals.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 1-9 = CPU 
 target <- c('1','2','3','4','5','6','7','8','9')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
-bz_df$CPU <- paste(bz_df$NAME,bz_df$NEW_NAME,sep= "-")
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
 bz_df <- bz_df[, c(1:2,8,3:7)]
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_corals_cpu.csv")), row.names = F)
 ```
 
-```{r CPU results for Seagrass}
-risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_seagrass.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+```{r CPU results for Coral in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_corals.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 1-9 = CPU 
 target <- c('1','2','3','4','5','6','7','8','9')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
-bz_df$CPU <- paste(bz_df$NAME,bz_df$NEW_NAME,sep= "-")
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_corals_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Seagrass in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
 bz_df <- bz_df[, c(1:2,8,3:7)]
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_seagrass_cpu.csv")), row.names = F)
 ```
 
-```{r CPU results for Mangroves}
-risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_mangroves.csv")
-risk_df$NAME <- as.factor(risk_df$NAME)
+```{r CPU results for Seagrass in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_seagrass.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
 # select rows 1-9 = CPU 
 target <- c('1','2','3','4','5','6','7','8','9')
-bz_df <- risk_df[risk_df$NAME %in% target,] 
-bz_df$CPU <- paste(bz_df$NAME,bz_df$NEW_NAME,sep= "-")
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_seagrass_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Mangroves in km2}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_km2_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
 bz_df <- bz_df[, c(1:2,8,3:7)]
 write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_km2_by_scenario_mangroves_cpu.csv")), row.names = F)
+```
+
+```{r CPU results for Mangroves in pct}
+risk_df <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/risk_pct_by_scenario_mangroves.csv")
+risk_df$cpu <- as.factor(risk_df$cpu)
+# select rows 1-9 = CPU 
+target <- c('1','2','3','4','5','6','7','8','9')
+bz_df <- risk_df[risk_df$cpu %in% target,] 
+bz_df$CPU <- paste(bz_df$cpu,bz_df$cpu_name,sep= "-")
+bz_df <- bz_df[, c(1:2,8,3:7)]
+write.csv(bz_df, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("risk_pct_by_scenario_mangroves_cpu.csv")), row.names = F)
 ```
 
 We completed this section so we can clear our working environment
@@ -928,7 +1236,7 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_coral
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_corals_bz.csv")), row.names = F)
 ```
@@ -946,7 +1254,7 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_seagrass
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_seagrass_bz.csv")), row.names = F)
 ```
@@ -964,10 +1272,11 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_mangroves
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_mangroves_bz.csv")), row.names = F)
 ```
+
 Last we combine the functiona habitat for each habitat into one database to create a barchart Refer to HRA_figure script)
 ```{r Combine the functional habitat for the 3 habitats into 1 database}
 functional_hab_sum_coral$Habitat <- "Corals" 
@@ -1001,7 +1310,7 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME,CPU,NEW_NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_coral
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_corals_cpu.csv")), row.names = F)
 ```
@@ -1019,7 +1328,7 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME,CPU,NEW_NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_seagrass
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_seagrass_cpu.csv")), row.names = F)
 ```
@@ -1037,7 +1346,7 @@ target <- c('High')
 risk_hig <- habitat_risk[habitat_risk$Risk %in% target,] 
 risk_hig$func_hab <- (risk_hig$km2)*0
 functional_hab <- rbind(risk_low, risk_med, risk_hig)
-functional_hab_sum <- functional_hab %>% group_by(Year,NAME,CPU,NEW_NAME) %>% summarise(km2 = sum(func_hab))
+functional_hab_sum <- functional_hab %>% group_by(Year,cpu,CPU,cpu_name) %>% summarise(km2 = sum(func_hab))
 functional_hab_sum -> functional_hab_sum_mangroves
 write.csv(functional_hab_sum, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("functional_habitat_km2_by_scenario_mangroves_cpu.csv")), row.names = F)
 ```
@@ -1202,9 +1511,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #1 
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('1')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1239,9 +1548,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #2
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('2')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1276,9 +1585,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #3
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('3')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1313,9 +1622,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #4
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('4')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1350,9 +1659,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #5
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('5')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1387,9 +1696,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #6
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('6')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1424,9 +1733,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #7
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('7')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1461,9 +1770,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #8
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('8')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1498,9 +1807,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_corals_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #9
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('9')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1569,9 +1878,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #1 
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('1')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1606,9 +1915,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #2
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('2')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1643,9 +1952,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #3
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('3')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1680,9 +1989,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #4
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('4')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1717,9 +2026,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #5
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('5')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1754,9 +2063,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #6
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('6')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1791,9 +2100,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #7
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('7')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1828,9 +2137,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #8
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('8')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1865,9 +2174,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_seagrass_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #9
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('9')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1936,9 +2245,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #1 
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('1')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -1973,9 +2282,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #2
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('2')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2010,9 +2319,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #3
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('3')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2047,9 +2356,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #4
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('4')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2084,9 +2393,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #5
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('5')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2121,9 +2430,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #6
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('6')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2158,9 +2467,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #7
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('7')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2195,9 +2504,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #8
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('8')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2232,9 +2541,9 @@ hab_risk <- read.csv("risk_km2_by_scenario_mangroves_cpu.csv")
 names(hab_risk)
 hab_risk <- hab_risk[-c(1:9,46:54,91:99),]
 # select rows where CPU = #9
-hab_risk$NAME <- as.factor(hab_risk$NAME)
+hab_risk$cpu <- as.factor(hab_risk$cpu)
 target <- c('9')
-hab_risk <- hab_risk[hab_risk$NAME %in% target,] 
+hab_risk <- hab_risk[hab_risk$cpu %in% target,] 
 hab_risk$Year <- factor(hab_risk$Year,  # Change ordering manually
                           levels = c("2016", "2020", "2025"))
 hab_risk$Risk <- factor(hab_risk$Risk,  # Change ordering manually
@@ -2276,15 +2585,21 @@ hab_functional$Year <- factor(hab_functional$Year,
                         levels = c("2016", "2020", "2025"))
 habcols <- c("coral", "black", "darkgreen")
 names(habcols) <- c("Corals", "Mangroves", "Seagrasses")
+hab_functional$km2 <- round(hab_functional$km2)
+
 ggbars <- ggplot(hab_functional) +
-  geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity") +
+geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity") +
   scale_fill_manual(values=habcols) +
-  labs(title = "Functional Habitat", x = "", y = bquote("Area "(km^2)), fill = "Habitats:") +
+  labs(title = "Functional Habitat", x = "", y = bquote("Area "(km^2)),    fill = "Habitats:") +
   facet_wrap("Year") +
   geom_text(data=hab_functional,aes(x=Habitat,y=km2,label=km2), 
-            position=position_dodge(width=0.9),vjust=-0.15) +
-  theme_bw() +
-  theme(axis.title.x = element_blank(), 
+            position=position_dodge(width=0.9),vjust=-0.15)
+  my_theme = list(
+    theme_classic()+
+    theme(panel.background = element_blank(),
+        strip.background = element_rect(colour=NA, fill=NA),
+        panel.border = element_blank(),
+        axis.title.x = element_blank(), 
         axis.ticks.x = element_blank(),
         axis.text.x = element_blank(),
         axis.title.y = element_text(size = 12, face="bold"), 
@@ -2292,11 +2607,11 @@ ggbars <- ggplot(hab_functional) +
         strip.text.x = element_text(size = 12),
         legend.title = element_text(colour="black", size=12, face="bold"),
         legend.text = element_text(colour="black", size=12),
-        legend.position="bottom")
-plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+        legend.position="bottom"))
+plot_grid(ggbars + my_theme + scale_y_continuous(labels = scales::comma))
 pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("Fig_7_barplot_bz_hab_functional.pdf")),
-    width = 5, height = 4.5)
-plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+    width = 5, height = 3.8)
+plot_grid(ggbars + my_theme + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
 

@@ -1053,11 +1053,11 @@ write.csv(cv_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_
 cv_outputs <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/cv_ei_reclass_count_high.csv")
 CPU_shp <- st_read("E:/Greenfin/_data/base_layers/cp_regions_3km_buffer.shp")
 CPU_df <- as.data.frame(CPU_shp)
-CPU_df$NAME <- as.factor(CPU_df$NAME)
-CPU_df$NEW_NAME <- as.factor(CPU_df$NEW_NAME)
-CPU_df$cpu <- CPU_df$NAME
+CPU_df$cpu <- as.factor(CPU_df$cpu)
+CPU_df$cpu_name <- as.factor(CPU_df$cpu_name)
+CPU_df$cpu <- CPU_df$cpu
 CPU <- CPU_df[,c(6,3)]
-CPU$CPU <- paste(CPU$cpu,CPU$NEW_NAME,sep= "-")
+CPU$CPU <- paste(CPU$cpu,CPU$cpu_name,sep= "-")
 cv_outputs <- cbind(cv_outputs,CPU, by="cpu")
 write.csv(cv_outputs, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/", "cv_ei_reclass_count_high.csv"), row.names = F)
 ```

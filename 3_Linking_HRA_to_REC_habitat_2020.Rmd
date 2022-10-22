@@ -27,72 +27,69 @@ library(tigris)
 library(maptools)
 ```
 
-# A/ Create shapefiles of habitat risk maps (Low and Medium risk maps) based on the 2016 Human stressors:
+Note: The working directory (WD) needs to reflect your local machine. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script.
+
+# A/ Create shapefiles of habitat risk maps (No|Low and Medium risk maps) based on the 2016 Human stressors:
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). We created rasters representing each habitat under each risk level. We need to convert those rasters to  shapefiles for the low and medium risk levels for each habitat type.
 
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin")
-knitr::opts_knit$set(root.dir = 'E:/GreenFin')
-```
+To import the HRA risk raster maps by habitat, point towards your working directory towards the folder with the HRA 2016 outputs. 
 
 ## A.1/ Coral habitat 
-
 These section of codes will create two polygon shapefiles representing the coral habitat portions under no/low risk and medium risk.
 
 First we convert the output coral risk map from HRA into a dissolved polygon and clip it by the footprint of the coral habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_corals.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_corals.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/corals.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_corals_habitat_risk_2016_2016", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_corals_habitat_risk_2016", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_corals_habitat_risk_2016_2016.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_corals_habitat_risk_2016.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
+
 ## A.2/ Seagrass habitat
 
 These section of codes will create two polygon shapefiles representing the seagrass habitat portions under no/low risk and medium risk.
 
 First we convert the output seagrass risk map from HRA into a dissolved polygon and clip it by the footprint of the seagrass habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/seagrass.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_seagrass_habitat_risk_2016_2016", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_seagrass_habitat_risk_2016", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_seagrass_habitat_risk_2016_2016.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_seagrass_habitat_risk_2016.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 ## A.3/ Mangroves habitat
@@ -101,43 +98,39 @@ These section of codes will create two polygon shapefiles representing the mangr
 
 First we convert the output mangroves risk map from HRA into a dissolved polygon and clip it by the footprint of the mangroves habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/mangroves.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_mangroves_habitat_risk_2016_2016", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_mangroves_habitat_risk_2016", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_mangroves_habitat_risk_2016_2016.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_mangroves_habitat_risk_2016.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
+
 Clear the working environment 
 ```{r Clear the workspace}
 rm(list = ls(all.names=TRUE))
 ```
 
-# B/ Create shapefiles of habitat risk maps (Low and Medium risk maps) based on the 2020 Human stressors:
+# B/ Create shapefiles of habitat risk maps (No|Low and Medium risk maps) based on the 2020 Human stressors:
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). We created rasters representing each habitat under each risk level. We need to convert those rasters to  shapefiles for the low and medium risk levels for each habitat type.
 
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin")
-knitr::opts_knit$set(root.dir = 'E:/GreenFin')
-```
+To import the HRA risk raster maps by habitat, point towards your working directory towards the folder with the HRA 2020 outputs. 
 
 ## B.1/ Coral habitat 
 
@@ -145,27 +138,27 @@ These section of codes will create two polygon shapefiles representing the coral
 
 First we convert the output coral risk map from HRA into a dissolved polygon and clip it by the footprint of the coral habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_corals.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_corals.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/corals.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_corals_habitat_risk_2016_2020", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_corals_habitat_risk_2020", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_corals_habitat_risk_2016_2020.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_corals_habitat_risk_2020.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 ## B.2/ Seagrass habitat
@@ -174,27 +167,27 @@ These section of codes will create two polygon shapefiles representing the seagr
 
 First we convert the output seagrass risk map from HRA into a dissolved polygon and clip it by the footprint of the seagrass habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/seagrass.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_seagrass_habitat_risk_2016_2020", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_seagrass_habitat_risk_2020", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_seagrass_habitat_risk_2016_2020.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_seagrass_habitat_risk_2020.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 
@@ -204,27 +197,27 @@ These section of codes will create two polygon shapefiles representing the mangr
 
 First we convert the output mangroves risk map from HRA into a dissolved polygon and clip it by the footprint of the mangroves habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/mangroves.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_mangroves_habitat_risk_2016_2020", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_mangroves_habitat_risk_2020", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_mangroves_habitat_risk_2016_2020.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_mangroves_habitat_risk_2020.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2020_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2020_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Clear the working environment 
@@ -236,12 +229,7 @@ rm(list = ls(all.names=TRUE))
 
 HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). We created rasters representing each habitat under each risk level. We need to convert those rasters to  shapefiles for the low and medium risk levels for each habitat type.
 
-To import the HRA risk raster maps by habitat, we point our working directory towards the folder with the HRA outputs in our shared Gdrive:
-
-```{r Set the working directory}
-setwd("E:/GreenFin")
-knitr::opts_knit$set(root.dir = 'E:/GreenFin')
-```
+To import the HRA risk raster maps by habitat, point towards your working directory towards the folder with the HRA 2025 outputs. 
 
 ## C.1/ Coral habitat 
 
@@ -249,27 +237,27 @@ These section of codes will create two polygon shapefiles representing the coral
 
 First we convert the output coral risk map from HRA into a dissolved polygon and clip it by the footprint of the coral habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_corals.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_corals.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/corals.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_corals_habitat_risk_2016_2025", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_corals_habitat_risk_2025", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_corals_habitat_risk_2016_2025.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_corals_habitat_risk_2025.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_corals_habitat_risk_2016_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_corals_habitat_risk_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 ## C.2/ Seagrass habitat
@@ -278,27 +266,27 @@ These section of codes will create two polygon shapefiles representing the seagr
 
 First we convert the output seagrass risk map from HRA into a dissolved polygon and clip it by the footprint of the seagrass habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/seagrass.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_seagrass_habitat_risk_2016_2025", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_seagrass_habitat_risk_2025", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_seagrass_habitat_risk_2016_2025.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_seagrass_habitat_risk_2025.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_seagrass_habitat_risk_2016_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_seagrass_habitat_risk_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 ## C.3/ Mangroves habitat
@@ -307,27 +295,27 @@ These section of codes will create two polygon shapefiles representing the mangr
 
 First we convert the output mangroves risk map from HRA into a dissolved polygon and clip it by the footprint of the mangroves habitat shapefile
 ```{r Convert HRA raster to polygon}
-raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
+raster_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
 r.to.poly<-rasterToPolygons(raster_risk, dissolve = T)
 habitat_shp <- st_read("E:/GreenFin/01_hra_model/1_habitat_maps/2016/mangroves.shp")
 int.r <-raster::intersect(r.to.poly, habitat_shp) 
-writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data", layer="hra_output_mangroves_habitat_risk_2016_2025", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=int.r, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats", layer="hra_output_mangroves_habitat_risk_2025", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Then we need to split the newly created polygon by no/low and medium risks maps and export those two maps into our Gdrive in the REC model folder. First we import the habitat risk polygon created above as a shapefile and set "risk" as a factor. THen, we create a map which only represents the no and low risk areas (i.e, the values = 0 & 1). We do the same process for the medium risk coral habitat (i.e., the value = 2):
 ```{r Split the polygon by each risk level}
-habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/hra_output_mangroves_habitat_risk_2016_2025.shp")
+habitat_risk <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/hra_output_mangroves_habitat_risk_2025.shp")
 habitat_risk$RECLASS <- as.factor(habitat_risk$RECLASS)
 target <- c('0','1')
 habitat_risk_low <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_low_sp <- as(habitat_risk_low, "Spatial")
 class(habitat_risk_low_sp)
-writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_low_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2025_low", driver="ESRI Shapefile", overwrite_layer =  T)
 target <- c('2')
 habitat_risk_med <- habitat_risk[habitat_risk$RECLASS %in% target,]
 habitat_risk_med_sp <- as(habitat_risk_med, "Spatial")
 class(habitat_risk_med_sp)
-writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/one_risk_level", layer="hra_output_mangroves_habitat_risk_2016_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=habitat_risk_med_sp, dsn="E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level", layer="hra_output_mangroves_habitat_risk_2025_med", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Clear the working environment 
@@ -337,7 +325,7 @@ rm(list = ls(all.names=TRUE))
 
 
 # D/ Calculate the functional habitat per habitat for the human stressors from 2016:
-To link HRA tothe REC model, we need to translate habitat risk into functional habitat per hexagon using the following assumptions: 
+To link HRA to the REC model, we need to translate habitat risk into functional habitat per hexagon using the following assumptions: 
 High risk habitat -> 0% functional = no services
 Medium risk habitat ->50% functional = some services 
 Low risk habitat-> 100% functional = all delivery
@@ -353,7 +341,7 @@ predictors <- rec_aoi
 ## D.1/ Calculate the functional habitat for the Coral habitat from 2016 and human stressors from 2016
 First, we calculate the area (m2) of coral habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2016_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2016_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -374,7 +362,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of coral habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2016_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2016_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -382,6 +370,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -402,7 +391,7 @@ summary(predictors$pctcor)
 
 First, we calculate the area (m2) of seagrass habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2016_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2016_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -410,6 +399,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -422,7 +412,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2016_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2016_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -430,6 +420,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -450,7 +441,7 @@ summary(predictors$pctsgr)
 
 First, we calculate the area (m2) of mangroves habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2016_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2016_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -458,6 +449,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -470,7 +462,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2016_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2016_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -478,6 +470,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -506,8 +499,8 @@ Export it as a shapefile and a csv file
 ```{r Export as shp and csv}
 predictors_sp <- as(predictors, "Spatial")
 class(predictors_sp)
-writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/habitats_2016/shp", layer="preds_functional_2016_habitats_2016", driver="ESRI Shapefile", overwrite_layer =  T)
-write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/habitats_2016/csv/preds_functional_2016_habitats_2016", ".csv"))
+writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/2020_habitats/shp", layer="preds_functional_2016_habitats_2016", driver="ESRI Shapefile", overwrite_layer =  T)
+write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/2020_habitats/csv/preds_functional_habitats_2016", ".csv"))
 ```
 
 Last, clear the working environment
@@ -533,7 +526,7 @@ predictors <- rec_aoi
 ## E.1/ Calculate the functional habitat for the Coral habitat from 2016 and human stressors from 2020
 First, we calculate the area (m2) of coral habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2020_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2020_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -541,6 +534,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -553,7 +547,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of coral habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2020_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2020_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -561,6 +555,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -581,7 +576,7 @@ summary(predictors$pctcor)
 
 First, we calculate the area (m2) of seagrass habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2020_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2020_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -589,6 +584,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -601,7 +597,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2020_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2020_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -629,7 +625,7 @@ summary(predictors$pctsgr)
 
 First, we calculate the area (m2) of mangroves habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2020_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2020_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -637,6 +633,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -649,7 +646,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2020_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2020_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -657,6 +654,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -685,8 +683,8 @@ Export it as a shapefile and a csv file
 ```{r Export as shp and csv}
 predictors_sp <- as(predictors, "Spatial")
 class(predictors_sp)
-writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/habitats_2016/shp", layer="preds_functional_2016_habitats_2020", driver="ESRI Shapefile", overwrite_layer =  T)
-write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/habitats_2016/csv/preds_functional_2016_habitats_2020", ".csv"))
+writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/2020_habitats/shp", layer="preds_functional_habitats_2020", driver="ESRI Shapefile", overwrite_layer =  T)
+write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/2020_habitats/csv/preds_functional_habitats_2020", ".csv"))
 ```
 
 Last, clear the working environment
@@ -701,6 +699,7 @@ Medium risk habitat ->50% functional = some services
 Low risk habitat-> 100% functional = all delivery
 
 First import the Recreation model AOI and reorder the attribute names and create predictor dataframe with the ID key (which i created to avoid the multiple PID with the same number from the REC gridded AOI shapefile which i intersected with the coastal planning units). We will add the habitat area from each habitat, under each risk level to eventually calculate the functional habitat.
+
 ```{r Create the REC database using the gridded AOI}
 rec_aoi <- st_read("E:/GreenFin/03_recreation/_base/rec_grid_hex_w_cpu.shp")
 rec_aoi <- rec_aoi %>%
@@ -711,7 +710,7 @@ predictors <- rec_aoi
 ## F.1/ Calculate the functional habitat for the Coral habitat from 2016 and human stressors from 2025
 First, we calculate the area (m2) of coral habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2025_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2025_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -719,6 +718,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -731,7 +731,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of coral habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_corals_habitat_risk_2016_2025_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_corals_habitat_risk_2025_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -739,6 +739,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -759,7 +760,7 @@ summary(predictors$pctcor)
 
 First, we calculate the area (m2) of seagrass habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2025_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2025_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -767,6 +768,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -779,7 +781,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_seagrass_habitat_risk_2016_2025_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_seagrass_habitat_risk_2025_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -787,6 +789,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -807,7 +810,7 @@ summary(predictors$pctsgr)
 
 First, we calculate the area (m2) of mangroves habitat under "no/low" risk within each hexagon from the REC model (i.e., PID).
 ```{r Calculate the area of habitat under low/no risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2025_low.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2025_low.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -815,6 +818,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under low risk, the habitat remains fully (100%) functional
 ```{r Apply the low risk 100% functional assumption}
 preds_rec <- predictors %>%
@@ -827,7 +831,7 @@ summary(predictors)
 
 Second, we calculate the area (m2) of seagrass habitat under "medium" risk within each hexagon from the REC model (i.e., PID). 
 ```{r Calculate the area of habitat under medium risk by PID}
-poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/one_risk_level/hra_output_mangroves_habitat_risk_2016_2025_med.shp")
+poly_layer <- st_read("E:/GreenFin/03_recreation/hra_data/2020_habitats/one_risk_level/hra_output_mangroves_habitat_risk_2025_med.shp")
 i_layer <- st_intersection(rec_aoi, poly_layer) 
 i_layer$m2 <- unclass(st_area(i_layer)) # m2
 pred_areas <- i_layer %>%
@@ -835,6 +839,7 @@ pred_areas <- i_layer %>%
   group_by(id) %>%
   summarise(pred_area = sum(m2)) ## 
 ```
+
 We assume that under medium risk, the habitat is 50% functional, so we divide those areas by 2.
 ```{r Apply the medium risk 50% functional assumption}
 preds_rec <- predictors %>%
@@ -852,7 +857,6 @@ summary(predictors$pctmgv)
 ```
 
 Before exporting it, we remove the columns with the areas of low and medium risks because we do not need them for the REC model. 
-
 ```{r Clean the database}
 names(predictors)
 predictors <- predictors[-c(4:5,7:8,10:11)]
@@ -863,10 +867,9 @@ Export it as a shapefile and a csv file
 ```{r Export as shp and csv}
 predictors_sp <- as(predictors, "Spatial")
 class(predictors_sp)
-writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/habitats_2016/shp", layer="preds_functional_2016_habitats_2025", driver="ESRI Shapefile", overwrite_layer =  T)
-write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/habitats_2016/csv/preds_functional_2016_habitats_2025", ".csv"))
+writeOGR(obj=predictors_sp, dsn="E:/GreenFin/03_recreation/predictors/2020_habitats/shp", layer="preds_functional_habitats_2025", driver="ESRI Shapefile", overwrite_layer =  T)
+write.csv(predictors %>% st_set_geometry(NULL), paste0("E:/GreenFin/03_recreation/predictors/2020_habitats/csv/preds_functional_habitats_2025", ".csv"))
 ```
-
 
 Last, clear the working environment
 ```{r Clear the workspace}
@@ -879,18 +882,18 @@ rm(list = ls(all.names=TRUE))
 
 Import the polygon shapefile with the functional habitat for coral, seagrass and mangroves in percent cover per hexagon.  
 ```{r Import the shp with the 2016 functional habitat values}
-rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/habitats_2016/shp/preds_functional_2016_habitats_2016.shp")
+rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/2020_habitats/shp/preds_functional_habitats_2016.shp")
 names(rec_predictors_poly)
 ```
 
-Rasterize the functional habitat percent cover by hexagon for each habitat type. 
+Rasterize the functional habitat percent cover by hexagon for each habitat type. The size of the blank raster represents the size of the REC model AOI. 
 
 Coral: 
 ```{r Rasterize 2016 coral functional habitat}
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctcor', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/corals_2016_2016.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/corals_2016.tif", overwrite=TRUE)
 ```
 
 Seagrass:  
@@ -898,7 +901,7 @@ Seagrass:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctsgr', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/seagrass_2016_2016.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/seagrass_2016.tif", overwrite=TRUE)
 ```
 
 Mangroves:  
@@ -906,14 +909,14 @@ Mangroves:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctmgv', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/mangroves_2016_2016.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/mangroves_2016.tif", overwrite=TRUE)
 ```
 
 ## G.2/ Rasterize functional habitat predictors for human stressors 2020 
 
 Import the polygon shapefile with the functional habitat for coral, seagrass nad mangroves in percent cover per hexagon.  
 ```{r Import the shp with the 2020 functional habitat values}
-rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/habitats_2016/shp/preds_functional_2016_habitats_2020.shp")
+rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/2020_habitats/shp/preds_functional_habitats_2020.shp")
 names(rec_predictors_poly)
 ```
 
@@ -924,7 +927,7 @@ Coral:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctcor', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/corals_2016_2020.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/corals_2020.tif", overwrite=TRUE)
 ```
 
 Seagrass:  
@@ -932,7 +935,7 @@ Seagrass:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctsgr', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/seagrass_2016_2020.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/seagrass_2020.tif", overwrite=TRUE)
 ```
 
 Mangroves:  
@@ -940,14 +943,14 @@ Mangroves:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctmgv', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/mangroves_2016_2020.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/mangroves_2020.tif", overwrite=TRUE)
 ```
 
 ## G.3/ Rasterize functional habitat predictors for human stressors 2025 
 
 Import the polygon shapefile with the functional habitat for coral, seagrass nad mangroves in percent cover per hexagon.  
 ```{r Import the shp with the 2025 functional habitat values}
-rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/habitats_2016/shp/preds_functional_2016_habitats_2025.shp")
+rec_predictors_poly <- st_read("E:/GreenFin/03_recreation/predictors/2020_habitats/shp/preds_functional_habitats_2025.shp")
 names(rec_predictors_poly)
 ```
 
@@ -958,7 +961,7 @@ Coral:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctcor', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/corals_2016_2025.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/corals_2025.tif", overwrite=TRUE)
 ```
 
 Seagrass:  
@@ -966,7 +969,7 @@ Seagrass:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctsgr', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/seagrass_2016_2025.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/seagrass_2025.tif", overwrite=TRUE)
 ```
 
 Mangroves:  
@@ -974,5 +977,5 @@ Mangroves:
 blank_raster <- raster(as(rec_predictors_poly, "Spatial"), ncol=6543, nrow=9750)
 predictor_raster <- rasterize(as(rec_predictors_poly, "Spatial"), blank_raster, 'pctmgv', progress = "text")
 plot(predictor_raster)
-writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/habitats_2016/mangroves_2016_2025.tif", overwrite=TRUE)
+writeRaster(predictor_raster, filename="E:/GreenFin/03_recreation/predictors/2020_habitats/mangroves_2025.tif", overwrite=TRUE)
 ```
