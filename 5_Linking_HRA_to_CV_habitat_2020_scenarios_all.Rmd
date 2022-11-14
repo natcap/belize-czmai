@@ -1,7 +1,7 @@
 ---
 title: "Converting the outputs from HRA to inputs in the Coastal Vulnerability model using the habitat maps from 2016"
 author: "Jade Delevaux"
-created: September 2022
+created: November 2022
 output:
   html_document:
     df_print: paged
@@ -37,7 +37,7 @@ HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves)
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the coral habitat.
 
 ```{r Reclassify risk levels into habitat protective values}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_corals.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_corals.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -53,7 +53,7 @@ plot(hab_risk_reclassified)
 
 For coral, we need to divide the coral habitat by the fringing and barrier reefs for CV. To do so, we import a coral map which distinguish between fringing and barrier reefs, where nearshore reef = 1 & barrier reef = 2. In one map, we set the coral habitat that is barrier reef as NA and the other we set the coral habitat that is nearshore as NA. Then we print out the maps.
 ```{r Export rasters with the habitat protective values & correct for the barrier reef}
-coral_w_barrier <-raster("E:/GreenFin/02_cv_model/hra_cv_linkages/corals_2016_w_barrier_500m.tif")
+coral_w_barrier <-raster("E:/GreenFin/02_cv_model/hra_cv_linkages/corals_2020_w_barrier_500m.tif")
 plot(coral_w_barrier)
 hab_risk_reclassified -> hab_risk_reclassified_nearshore
 hab_risk_reclassified_nearshore[coral_w_barrier>=2] <- NA
@@ -61,14 +61,14 @@ plot(hab_risk_reclassified_nearshore)
 hab_risk_reclassified -> hab_risk_reclassified_barrier
 hab_risk_reclassified_barrier[coral_w_barrier<2] <- NA
 plot(hab_risk_reclassified_barrier)
-writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
-writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 2/ Seagrass habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the seagrass habitat.
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
 reclass_df <- c(0, 4,
                 1, 4,
                 2, 4.5,
@@ -79,13 +79,13 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                              reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_seagrass.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_seagrass.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 3/ Mangroves habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the mangroves habita:
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -96,7 +96,7 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                                          reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_mangroves.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_mangroves.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 # A.2/ Calculate protective habitat rank values for each CV point
@@ -147,11 +147,11 @@ class(cv_data_buffer_corb_sp)
 
 Then, we import the habitat map rasters with the cv habitat protective rank values created in section A.1:
 ```{r Import the rasters with the habitat protective values}
-hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_forest.tif")
-hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_mangroves.tif")
-hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_seagrass.tif")
-hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_corals_nearshore.tif")
-hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2016_corals_barrier.tif")
+hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_forest.tif")
+hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_mangroves.tif")
+hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_seagrass.tif")
+hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_corals_nearshore.tif")
+hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2016_corals_barrier.tif")
 ```
 
 We calculate the habitat protective value mean within the buffers created in A.2:
@@ -214,11 +214,11 @@ We export a shapefile and csv file to the folder 2016:
 ```{r Export as shp and csv}
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_data_df <- as.data.frame(cv_data_sp)
 names(cv_data_df)
 cv_data_df <- cv_data_df[,-c(17:18)] 
-write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
+write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
 ```
 
 # A.6/ Recalculate the habitat rank for each CV point
@@ -226,7 +226,7 @@ Based on equation 15 in the user's guide, we need to recompute the new habitat r
 
 To do so, we need to import cv variables to compute the new habitat rank 
 ```{r Import the shp with the new habitat protective values}
-cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/cv_hab_protect_values_w_hra.shp")
+cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/cv_hab_protect_values_w_hra.shp")
 cv_data_hab_rank <- as.data.frame(cv_data)
 names(cv_data_hab_rank)
 ```
@@ -269,7 +269,7 @@ cv_data_hab_rank$r_no_hab <- 5
 
 Write the csv file
 ```{r Export csv results}
-write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", paste("cv_hab_rank_w_hra.csv")), row.names = F)
+write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", paste("cv_hab_rank_w_hra.csv")), row.names = F)
 ```
 
 Select only columns w shore_id and terms from equation 15:
@@ -281,7 +281,7 @@ cv_data <- cv_data[,-c(18,25:26)] # delete the redundant columns
 names(cv_data)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 # A.7/ Use the corrected Rhab to recompute the exposure index (EI) for each CV point
@@ -303,10 +303,10 @@ cv_data$hab_ei<- cv_data$nohab_ei - cv_data$hra_ei
 
 Write the results in a shp and csv formats:
 ```{r Export results as shp and csv}
-write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", paste("cv_ei_w_hra.csv")), row.names = F)
+write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", paste("cv_ei_w_hra.csv")), row.names = F)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Last, clear working environment
@@ -323,7 +323,7 @@ HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves)
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the coral habitat.
 
 ```{r Reclassify risk levels into habitat protective values}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_corals.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_corals.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -347,14 +347,14 @@ plot(hab_risk_reclassified_nearshore)
 hab_risk_reclassified -> hab_risk_reclassified_barrier
 hab_risk_reclassified_barrier[coral_w_barrier<2] <- NA
 plot(hab_risk_reclassified_barrier)
-writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
-writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 2/ Seagrass habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the seagrass habitat.
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
 reclass_df <- c(0, 4,
                 1, 4,
                 2, 4.5,
@@ -365,13 +365,13 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                              reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_seagrass.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_seagrass.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 3/ Mangroves habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the mangroves habita:
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -382,7 +382,7 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                                          reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_mangroves.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_mangroves.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 # B.2/ Calculate protective habitat rank values for each CV point
@@ -433,11 +433,11 @@ class(cv_data_buffer_corb_sp)
 
 Then, we import the habitat map rasters with the cv habitat protective rank values created in section A.1:
 ```{r Import the rasters with the habitat protective values}
-hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_forest.tif")
-hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_mangroves.tif")
-hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_seagrass.tif")
-hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_nearshore.tif")
-hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_barrier.tif")
+hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_forest.tif")
+hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_mangroves.tif")
+hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_seagrass.tif")
+hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_corals_nearshore.tif")
+hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2020_corals_barrier.tif")
 ```
 
 We calculate the habitat protective value mean within the buffers created in A.2:
@@ -500,11 +500,11 @@ We export a shapefile and csv file to the folder 2020:
 ```{r Export as shp and csv}
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_data_df <- as.data.frame(cv_data_sp)
 names(cv_data_df)
 cv_data_df <- cv_data_df[,-c(18:19)] 
-write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
+write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
 ```
 
 # B.6/ Recalculate the habitat rank for each CV point
@@ -512,7 +512,7 @@ Based on equation 15 in the user's guide, we need to recompute the new habitat r
 
 To do so, we need to import cv variables to compute the new habitat rank 
 ```{r Import the shp with the new habitat protective values}
-cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/cv_hab_protect_values_w_hra.shp")
+cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/cv_hab_protect_values_w_hra.shp")
 cv_data_hab_rank <- as.data.frame(cv_data)
 names(cv_data_hab_rank)
 ```
@@ -555,7 +555,7 @@ cv_data_hab_rank$r_no_hab <- 5
 
 Write the csv file
 ```{r Export csv results}
-write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_hab_rank_w_hra.csv")), row.names = F)
+write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", paste("cv_hab_rank_w_hra.csv")), row.names = F)
 ```
 
 Select only columns w shore_id and terms from equation 5:
@@ -567,7 +567,7 @@ cv_data <- cv_data[,-c(18,25:26)] # delete the redundant columns
 names(cv_data)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 # B.7/ Use the corrected Rhab to recompute the exposure index (EI) for each CV point
@@ -589,10 +589,10 @@ cv_data$hab_ei<- cv_data$nohab_ei - cv_data$hra_ei
 
 Write the results in a shp and csv formats:
 ```{r Export results as shp and csv}
-write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_ei_w_hra.csv")), row.names = F)
+write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", paste("cv_ei_w_hra.csv")), row.names = F)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Last, clear working environment
@@ -609,7 +609,7 @@ HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves)
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the coral habitat.
 
 ```{r Reclassify risk levels into habitat protective values}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_corals.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_corals.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -633,14 +633,14 @@ plot(hab_risk_reclassified_nearshore)
 hab_risk_reclassified -> hab_risk_reclassified_barrier
 hab_risk_reclassified_barrier[coral_w_barrier<2] <- NA
 plot(hab_risk_reclassified_barrier)
-writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
-writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 2/ Seagrass habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the seagrass habitat.
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
 reclass_df <- c(0, 4,
                 1, 4,
                 2, 4.5,
@@ -651,13 +651,13 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                              reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_seagrass.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_seagrass.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 ## 3/ Mangroves habitat
 These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the mangroves habita:
 ```{r Reclassify risk levels into habitat protective values and export as rasters}
-hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2020_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
 reclass_df <- c(0, 1,
                 1, 1,
                 2, 2,
@@ -668,7 +668,7 @@ reclass_m
 hab_risk_reclassified <- reclassify(hab_risk,
                                          reclass_m)
 plot(hab_risk_reclassified)
-writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_mangroves.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_mangroves.tif"), format="GTiff", overwrite=TRUE)
 ```
 
 # C.2/ Calculate protective habitat rank values for each CV point
@@ -719,11 +719,11 @@ class(cv_data_buffer_corb_sp)
 
 Then, we import the habitat map rasters with the cv habitat protective rank values created in section A.1:
 ```{r Import the rasters with the habitat protective values}
-hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_forest.tif")
-hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_mangroves.tif")
-hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_seagrass.tif")
-hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_corals_nearshore.tif")
-hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2025_corals_barrier.tif")
+hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_forest.tif")
+hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_mangroves.tif")
+hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_seagrass.tif")
+hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_corals_nearshore.tif")
+hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2020_habitats/cv_ranks_2025_corals_barrier.tif")
 ```
 
 We calculate the habitat protective value mean within the buffers created in A.2:
@@ -786,11 +786,11 @@ We export a shapefile and csv file to the folder 2025:
 ```{r Export as shp and csv}
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_data_df <- as.data.frame(cv_data_sp)
 names(cv_data_df)
 cv_data_df <- cv_data_df[,-c(18:19)] 
-write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
+write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
 ```
 
 # C.6/ Recalculate the habitat rank for each CV point
@@ -798,7 +798,7 @@ Based on equation 15 in the user's guide, we need to recompute the new habitat r
 
 To do so, we need to import cv variables to compute the new habitat rank 
 ```{r Import the shp with the new habitat protective values}
-cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/cv_hab_protect_values_w_hra.shp")
+cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/cv_hab_protect_values_w_hra.shp")
 cv_data_hab_rank <- as.data.frame(cv_data)
 names(cv_data_hab_rank)
 ```
@@ -841,7 +841,7 @@ cv_data_hab_rank$r_no_hab <- 5
 
 Write the csv file
 ```{r Export csv results}
-write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", paste("cv_hab_rank_w_hra.csv")), row.names = F)
+write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", paste("cv_hab_rank_w_hra.csv")), row.names = F)
 ```
 
 Select only columns w shore_id and terms from equation 5:
@@ -853,7 +853,7 @@ cv_data <- cv_data[,-c(18,25:26)] # delete the redundant columns
 names(cv_data)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 # C.7/ Use the corrected Rhab to recompute the exposure index (EI) for each CV point
@@ -875,10 +875,10 @@ cv_data$hab_ei<- cv_data$nohab_ei - cv_data$hra_ei
 
 Write the results in a shp and csv formats:
 ```{r Export results as shp and csv}
-write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", paste("cv_ei_w_hra.csv")), row.names = F)
+write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", paste("cv_ei_w_hra.csv")), row.names = F)
 cv_data_sp <- as(cv_data, "Spatial")
 class(cv_data_sp)
-writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
 ```
 
 Last, clear working environment
@@ -891,7 +891,7 @@ rm(list = ls(all.names=TRUE))
 We can now reclassify the CV results using the Exposure Index from the 3 scenarios in terms of low, low-medium, medium-high, and high risk. We extract the EI values for each year and stack the database:
 
 ```{r Extract and stack 2016 results}
-cv_2016 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/cv_ei_w_hra.shp")
+cv_2016 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/cv_ei_w_hra.shp")
 names(cv_2016)
 cv_2016_df <- as.data.frame(cv_2016)
 cv_ei_2016 <- as.data.frame(cv_2016_df[,c(24)])
@@ -903,7 +903,7 @@ cv_ei_2016_stack <- as.data.frame(cv_ei_2016_stack[,-c(2)])
 ```
 
 ```{r Extract and stack 2020 results}
-cv_2020 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/cv_ei_w_hra.shp")
+cv_2020 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/cv_ei_w_hra.shp")
 names(cv_2020)
 cv_2020_df <- as.data.frame(cv_2020)
 cv_ei_2020 <- as.data.frame(cv_2020_df[,c(24)])
@@ -915,7 +915,7 @@ cv_ei_2020_stack <- as.data.frame(cv_ei_2020_stack[,-c(2)])
 ```
 
 ```{r Extract and stack 2025 results}
-cv_2025 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/cv_ei_w_hra.shp")
+cv_2025 <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/cv_ei_w_hra.shp")
 names(cv_2025)
 cv_2025_df <- as.data.frame(cv_2025)
 cv_ei_2025 <- as.data.frame(cv_2025_df[,c(24)])
@@ -963,80 +963,81 @@ Then we export the results as shapefile and csv:
 ```{r Export 2016 results as shp and csv}
 cv_2016_sp <- as(cv_2016, "Spatial")
 class(cv_2016_sp)
-writeOGR(obj=cv_2016_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/", layer="cv_2016_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_2016_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/", layer="cv_2016_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_2016_df <- as.data.frame(cv_2016_sp)
 names(cv_2016_df)
 cv_2016_df <- cv_2016_df[,-c(28:29)]# delete coord
 names(cv_2016_df)
-write.csv(cv_2016_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/", "cv_2016_ei_reclass.csv"))
+write.csv(cv_2016_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/", "cv_2016_ei_reclass.csv"), row.names = F)
 ```
 
 ```{r Export 2020 results as shp and csv}
 cv_2020_sp <- as(cv_2020, "Spatial")
 class(cv_2020_sp)
-writeOGR(obj=cv_2020_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/", layer="cv_2020_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_2020_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/", layer="cv_2020_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_2020_df <- as.data.frame(cv_2020_sp)
 names(cv_2020_df)
 cv_2020_df <- cv_2020_df[,-c(28:29)]# delete coord
 names(cv_2020_df)
-write.csv(cv_2020_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/", "cv_2020_ei_reclass.csv"))
+write.csv(cv_2020_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/", "cv_2020_ei_reclass.csv"), row.names = F)
 ```
 
 ```{r Export 2025 results as shp and csv}
 cv_2025_sp <- as(cv_2025, "Spatial")
 class(cv_2025_sp)
-writeOGR(obj=cv_2025_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/", layer="cv_2025_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
+writeOGR(obj=cv_2025_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/", layer="cv_2025_ei_reclass", driver="ESRI Shapefile", overwrite_layer =  T)
 cv_2025_df <- as.data.frame(cv_2025_sp)
 names(cv_2020_df)
 cv_2025_df <- cv_2025_df[,-c(28:29)]# delete coord
 names(cv_2025_df)
-write.csv(cv_2025_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/", "cv_2025_ei_reclass.csv"))
+write.csv(cv_2025_df, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/", "cv_2025_ei_reclass.csv"), row.names = F)
 ```
 
 # Summarize CV results from all the scenarios (2016, 2020, 2025) by coastal planning units:
 
 We need to assign the shoreline point to each coastal planning unit to compute the number of shoreline km under high risk in each planning unit:
 ```{r Count the number of shoreline points with high coastal risk in 2016}
-cv_2016_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/2016/cv_2016_ei_reclass.csv")
+cv_2016_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats/2016/cv_2016_ei_reclass.csv")
 names(cv_2016_ei_reclass_cpu)
 cv_2016_ei_reclass_cpu$ei_class<- as.factor(cv_2016_ei_reclass_cpu$ei_class)
 cv_2016_ei_reclass_cpu$cpu<- as.factor(cv_2016_ei_reclass_cpu$cpu)
-cv_2016_ei_reclass_cpu_count <- cv_2016_ei_reclass_cpu [,c(2,13,28)]
+cv_2016_ei_reclass_cpu_count <- cv_2016_ei_reclass_cpu [,c(1,12,27)]
 cv_2016_shoreline_km <- aggregate(shore_id ~ cpu + ei_class, data = cv_2016_ei_reclass_cpu_count, FUN = length)
 cv_2016_shoreline_km$km <- cv_2016_shoreline_km$shore_id/4
-cv_2016_shoreline_km_high <- cv_2016_shoreline_km[c(1:9),]
-write.csv(cv_2016_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/", "cv_2016_ei_reclass_count.csv"), row.names = F)
-write.csv(cv_2016_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2016/", "cv_2016_ei_reclass_count_high.csv"), row.names = F)
+target <- c('high')
+cv_2016_shoreline_km_high <- cv_2016_shoreline_km[cv_2016_shoreline_km$ei_class %in% target,] 
+write.csv(cv_2016_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/", "cv_2016_ei_reclass_count.csv"), row.names = F)
+write.csv(cv_2016_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2016/", "cv_2016_ei_reclass_count_high.csv"), row.names = F)
 ```
 
 Do the same for 2020
 ```{r Count the number of shoreline points with high coastal risk in 2020}
-cv_2020_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/2020/cv_2020_ei_reclass.csv")
+cv_2020_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats/2020/cv_2020_ei_reclass.csv")
 names(cv_2020_ei_reclass_cpu)
 cv_2020_ei_reclass_cpu$ei_class<- as.factor(cv_2020_ei_reclass_cpu$ei_class)
 cv_2020_ei_reclass_cpu$cpu<- as.factor(cv_2020_ei_reclass_cpu$cpu)
-cv_2020_ei_reclass_cpu_count <- cv_2020_ei_reclass_cpu [,c(2,13,28)]
+cv_2020_ei_reclass_cpu_count <- cv_2020_ei_reclass_cpu [,c(1,12,27)]
 cv_2020_shoreline_km <- aggregate(shore_id ~ cpu + ei_class, data = cv_2020_ei_reclass_cpu_count, FUN = length)
 cv_2020_shoreline_km$km <- cv_2020_shoreline_km$shore_id/4
-cv_2020_shoreline_km_high <- cv_2020_shoreline_km[c(1:9),]
-cv_2020_shoreline_km_high$km <- cv_2020_shoreline_km_high$shore_id/4
-write.csv(cv_2020_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/", "cv_2020_ei_reclass_count.csv"), row.names = F)
-write.csv(cv_2020_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/", "cv_2020_ei_reclass_count_high.csv"), row.names = F)
+target <- c('high')
+cv_2020_shoreline_km_high <- cv_2020_shoreline_km[cv_2020_shoreline_km$ei_class %in% target,] 
+write.csv(cv_2020_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/", "cv_2020_ei_reclass_count.csv"), row.names = F)
+write.csv(cv_2020_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2020/", "cv_2020_ei_reclass_count_high.csv"), row.names = F)
 ```
 
 And 2025
 ```{r Count the number of shoreline points with high coastal risk in 2025}
-cv_2025_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/2025/cv_2025_ei_reclass.csv")
+cv_2025_ei_reclass_cpu <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats/2025/cv_2025_ei_reclass.csv")
 names(cv_2025_ei_reclass_cpu)
 cv_2025_ei_reclass_cpu$ei_class<- as.factor(cv_2025_ei_reclass_cpu$ei_class)
 cv_2025_ei_reclass_cpu$cpu<- as.factor(cv_2025_ei_reclass_cpu$cpu)
-cv_2025_ei_reclass_cpu_count <- cv_2025_ei_reclass_cpu [,c(2,13,28)]
+cv_2025_ei_reclass_cpu_count <- cv_2025_ei_reclass_cpu [,c(1,12,27)]
 cv_2025_shoreline_km <- aggregate(shore_id ~ cpu + ei_class, data = cv_2025_ei_reclass_cpu_count, FUN = length)
 cv_2025_shoreline_km$km <- cv_2025_shoreline_km$shore_id/4
-cv_2025_shoreline_km_high <- cv_2025_shoreline_km[c(1:9),]
-cv_2025_shoreline_km_high$km <- cv_2025_shoreline_km_high$shore_id/4
-write.csv(cv_2025_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/", "cv_2025_ei_reclass_count.csv"), row.names = F)
-write.csv(cv_2025_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2025/", "cv_2025_ei_reclass_count_high.csv"), row.names = F)
+target <- c('high')
+cv_2025_shoreline_km_high <- cv_2025_shoreline_km[cv_2025_shoreline_km$ei_class %in% target,]
+write.csv(cv_2025_shoreline_km, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/", "cv_2025_ei_reclass_count.csv"), row.names = F)
+write.csv(cv_2025_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/2025/", "cv_2025_ei_reclass_count_high.csv"), row.names = F)
 ```
 
 ```{r Combine the thtree databases into 1}
@@ -1044,41 +1045,44 @@ cv_2016_shoreline_km_high$Year <- "2016"
 cv_2020_shoreline_km_high$Year <- "2020"
 cv_2025_shoreline_km_high$Year <- "2025"
 cv_shoreline_km_high <- rbind(cv_2016_shoreline_km_high, cv_2020_shoreline_km_high, cv_2025_shoreline_km_high)
-write.csv(cv_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/", "cv_ei_reclass_count_high.csv"), row.names = F)
+write.csv(cv_shoreline_km_high, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/", "cv_ei_reclass_count_high.csv"), row.names = F)
 ```
 
 # Summarize the results into bar charts:
 
-```{r}
-cv_outputs <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/cv_ei_reclass_count_high.csv")
+```{r attach the CPU names to the CV results}
+cv_outputs <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats/cv_ei_reclass_count_high.csv")
 CPU_shp <- st_read("E:/Greenfin/_data/base_layers/cp_regions_3km_buffer.shp")
 CPU_df <- as.data.frame(CPU_shp)
 CPU_df$cpu <- as.factor(CPU_df$cpu)
 CPU_df$cpu_name <- as.factor(CPU_df$cpu_name)
 CPU_df$cpu <- CPU_df$cpu
-CPU <- CPU_df[,c(6,3)]
-CPU$CPU <- paste(CPU$cpu,CPU$cpu_name,sep= "-")
-cv_outputs <- cbind(cv_outputs,CPU, by="cpu")
-write.csv(cv_outputs, paste0("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/", "cv_ei_reclass_count_high.csv"), row.names = F)
+CPU_df$cpuwname <- paste(CPU_df$cpu,CPU_df$cpu_name,sep= "-")
+cpu_info <- CPU_df[,c(1,5)]
+cv_outputs <- cbind(cv_outputs,cpu_info, by="cpu")
+cv_outputs <- cv_outputs[,-c(6,8)]
+write.csv(cv_outputs, paste0("E:/GreenFin/02_cv_model/cv_outputs/2020_habitats/", "cv_ei_reclass_count_high.csv"), row.names = F)
 ```
 
 Create bar chart on Coastal Risk Exposure by CPU & add names to the Coastal Planning Unit
-```{r Build bar chart on Annual expenditure by CPU}
-cv_outputs <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats/cv_ei_reclass_count_high.csv")
-cv_outputs$CV.model <- factor(cv_outputs$CV.model,
+```{r Build bar chart with km of shoreline protected by CPU}
+cv_outputs <- read.csv("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats/cv_ei_reclass_count_high.csv")
+# add a column
+cv_outputs$CV_model <- "Coastal Risk Exposure"
+cv_outputs$CV_model <- factor(cv_outputs$CV_model,
                                    levels = c("Coastal Risk Exposure"))
 names(cv_outputs)
 cv_outputs$Year <- factor(cv_outputs$Year,
                            levels = c("2025", "2020", "2016"))
-cv_outputs$CPU <- factor(cv_outputs$CPU,
+cv_outputs$cpuwname <- factor(cv_outputs$cpuwname,
                           levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
 year_cols <- c("deepskyblue", "darkorchid", "deeppink")
 names(year_cols) <- c("2016", "2020", "2025")
 ggbars <- ggplot(cv_outputs) +
-  geom_bar(aes(x=CPU, y=km, fill=Year), position="dodge", stat="identity") +
+  geom_bar(aes(x=cpuwname, y=km, fill=Year), position="dodge", stat="identity") +
   scale_fill_manual(values=year_cols) +
   labs(title = "Length of Shoreline at High Risk", x = "Coastal Planning Units", y = "Shoreline at High Risk (km)") +
-  facet_wrap("CV.model") +
+  facet_wrap("CV_model") +
   theme_bw() +
   theme(axis.title.x = element_text(size = 12, face="bold"), 
         axis.title.y = element_text(size = 12, face="bold"), 
@@ -1089,7 +1093,7 @@ ggbars <- ggplot(cv_outputs) +
         legend.text = element_text(colour="black", size=12),
         legend.position="bottom")
 plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
-pdf(file.path("E:/Greenfin/02_cv_model/cv_outputs/2016_habitats", paste("_barplot_cpu_cv_high_ei_km.pdf")),
+pdf(file.path("E:/Greenfin/02_cv_model/cv_outputs/2020_habitats", paste("_barplot_cpu_cv_high_ei_km.pdf")),
     width = 8, height = 5)
 plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
 dev.off()

@@ -1034,68 +1034,6 @@ write.csv(stress_all, file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_an
 
 
 ## 10/ Figures in km2:
-```{r}
-install.packages("lemon") # Install 
-library(lemon) # Load
-install.packages("ggthemes") # Install 
-library(ggthemes) # Load
-```
-
-```{r Make bar chart for all stressors at Belize scale}
-setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
-# import dataframe
-results <- read.csv("fig_all_stressors_delta_km2_melt.csv")
-# select cpu rows only
-target <- c('10')
-results <- results[results$cpu %in% target,] 
-
-# set the order for the stressors
-results$stress_code <- factor(results$stress_code,  # Change ordering manually
-                          levels = c("1","2","3","4","5","6","7","8","9"))
-
-# set the order for the stressors
-results$stressor <- factor(results$stressor,  # Change ordering manually
-                          levels = c("runoff","aquaculture","development","dredging","fishing","oil","recreation","transportation","conservation"))
-
-# set the order for the years
-results$variable <- factor(results$variable,  # Change ordering manually
-                          levels = c("dlt_2020", "dlt_2025"))
-# set custom colors
- col_stressor <- c("brown", "orange", "purple","darkblue","lightblue","yellow","green","darkgrey","pink")
- names(col_stressor) <- c("Agriculture runoff","Aquaculture","Development","Dredging","Fishing","Oil Exploration","Recreation","Transportation","Conservation")
- 
-# build the bar chart
-ggbars <- ggplot(results) +
-  geom_bar(aes(x=stress_code, y=value, fill=stressor), position="dodge", stat="identity") +
-  scale_fill_manual(values=c("brown", "orange", "purple","darkblue","lightblue","yellow","green","darkgrey","pink")) +
-  labs(title = "", x = "", y = "", fill = "Human activities:") +
-  facet_wrap("variable", nrow = 2) +
-  facet_rep_grid("variable")
-  #geom_text(data=results,aes(x=stress_code,y=value,label=value), 
-  #          position=position_dodge(width=0.9),vjust=-0.15) +
-  my_theme = list(
-    theme_classic()+
-    theme(panel.background = element_blank(),
-        strip.background = element_rect(colour=NA, fill=NA),
-        panel.border = element_blank(),
-        axis.title.x = element_blank(), 
-        axis.ticks.x = element_line(size = 1),
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 12, face="bold"), 
-        axis.text.y = element_text(size = 12, color = "black"),
-        strip.text.x = element_text(size = 12),
-        panel.grid.major.x = element_blank() ,
-        panel.grid.major.y = element_blank(),
-        legend.title = element_text(colour="black", size=12, face="bold"),
-        legend.text = element_text(colour="black", size=12),
-        legend.position="bottom"))
-plot_grid((ggbars + my_theme + scale_y_continuous(labels = scales::comma)) + guides(fill=guide_legend(nrow=3,byrow=TRUE)))
-# export and displays as values
-pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_km2.pdf")),
-    width = 4, height = 6)
-plot_grid((ggbars + my_theme + scale_y_continuous(labels = scales::comma)) + guides(fill=guide_legend(nrow=3,byrow=TRUE)))
-dev.off()
-```
 
 ```{r Make bar chart for agriculture runoff by CPU}
 setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")

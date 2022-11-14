@@ -1,0 +1,314 @@
+---
+title: "Converting the outputs from HRA to inputs in the Coastal Vulnerability model using the habitat maps from 2016 ~ Stressors 2020"
+author: "Jade Delevaux"
+created: September 2022
+output:
+  html_document:
+    df_print: paged
+---
+
+To run this script, install the packages below
+
+```{r Install packages}
+library(sf)
+library(foreign)
+library(raster)
+library(rgdal)
+library(dplyr)
+library(exactextractr) # quick zonal stat
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+library(rgeos)
+library(sp)
+library(ggpubr)
+library(tigris)
+library(maptools)
+library(buffeRs)
+library(matrixStats)
+```
+
+# A/ Convert HRA outputs into inputs for CV:
+HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). We need to convert those risk levels into habitat protective values for CV. 
+
+## A.1/ Coral habitat 
+These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the coral habitat.
+
+```{r Reclassify risk levels into habitat protective values}
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_corals.tif")
+reclass_df <- c(0, 1,
+                1, 1,
+                2, 2,
+                3, 4)
+reclass_df
+
+reclass_m <- matrix(reclass_df, ncol = 2, byrow = TRUE)
+reclass_m
+hab_risk_reclassified <- reclassify(hab_risk,
+                                    reclass_m)
+plot(hab_risk_reclassified)
+```
+
+For coral, we need to divide the coral habitat by the fringing and barrier reefs for CV. To do so, we import a coral map which distinguish between fringing and barrier reefs, where nearshore reef = 1 & barrier reef = 2. In one map, we set the coral habitat that is barrier reef as NA and the other we set the coral habitat that is nearshore as NA. Then we print out the maps.
+```{r Export rasters with the habitat protective values & correct for the barrier reef}
+coral_w_barrier <-raster("E:/GreenFin/02_cv_model/hra_cv_linkages/corals_2016_w_barrier_500m.tif")
+plot(coral_w_barrier)
+hab_risk_reclassified -> hab_risk_reclassified_nearshore
+hab_risk_reclassified_nearshore[coral_w_barrier>=2] <- NA
+plot(hab_risk_reclassified_nearshore)
+hab_risk_reclassified -> hab_risk_reclassified_barrier
+hab_risk_reclassified_barrier[coral_w_barrier<2] <- NA
+plot(hab_risk_reclassified_barrier)
+writeRaster(hab_risk_reclassified_nearshore, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_nearshore.tif"), format="GTiff", overwrite=TRUE)
+writeRaster(hab_risk_reclassified_barrier, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_barrier.tif"), format="GTiff", overwrite=TRUE)
+```
+
+## A.2/ Seagrass habitat
+These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the seagrass habitat.
+```{r Reclassify risk levels into habitat protective values and export as rasters}
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
+reclass_df <- c(0, 4,
+                1, 4,
+                2, 4.5,
+                3, 5)
+reclass_df
+reclass_m <- matrix(reclass_df, ncol = 2, byrow = TRUE)
+reclass_m
+hab_risk_reclassified <- reclassify(hab_risk,
+                             reclass_m)
+plot(hab_risk_reclassified)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_seagrass.tif"), format="GTiff", overwrite=TRUE)
+```
+
+## A.3/ Mangroves habitat
+These codes will create a map with habitat protective values based on a classification matrix and habitat risk values for the mangroves habita:
+```{r Reclassify risk levels into habitat protective values and export as rasters}
+hab_risk <-raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
+reclass_df <- c(0, 1,
+                1, 1,
+                2, 2,
+                3, 5)
+reclass_df
+reclass_m <- matrix(reclass_df, ncol = 2, byrow = TRUE)
+reclass_m
+hab_risk_reclassified <- reclassify(hab_risk,
+                                         reclass_m)
+plot(hab_risk_reclassified)
+writeRaster(hab_risk_reclassified, filename=file.path("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_mangroves.tif"), format="GTiff", overwrite=TRUE)
+```
+
+# B/ Calculate protective habitat rank values for each CV point
+First, we import CV shoreline points with the phyiscal drivers values attached
+```{r Import CV points with physical drivers}
+cv_data <- st_read("E:/GreenFin/02_cv_model/hra_cv_linkages/cv_outputs_cpu.shp")
+```
+
+## B.1/ Create the protective buffers per habitat type
+For coastal forest the protective distance is 2000m:
+```{r Set coastal forest protective distance}
+cv_data_sp <- as(cv_data, "Spatial")
+class(cv_data_sp)
+cv_data_buffer_fors = sf::st_buffer(cv_data, 2000)
+cv_data_buffer_fors_sp <- as(cv_data_buffer_fors, "Spatial")
+class(cv_data_buffer_fors_sp)
+```
+
+For mangroves the protective distance is 2000m
+```{r Set mangroves protective distance}
+cv_data_sp <- as(cv_data, "Spatial")
+cv_data_buffer_mang = sf::st_buffer(cv_data, 2000)
+cv_data_buffer_mang_sp <- as(cv_data_buffer_mang, "Spatial")
+class(cv_data_buffer_mang_sp)
+```
+
+For seagrass the protective distance is 500m:
+```{r Set seagrass protective distance}
+cv_data_buffer_seag = sf::st_buffer(cv_data, 500)
+cv_data_buffer_seag_sp <- as(cv_data_buffer_seag, "Spatial")
+class(cv_data_buffer_seag_sp)
+```
+
+For fringing reef the protective distance is 2000m:
+```{r Set fringing reef protective distance}
+cv_data_buffer_corf = sf::st_buffer(cv_data, 2000)
+cv_data_buffer_corf_sp <- as(cv_data_buffer_corf, "Spatial")
+class(cv_data_buffer_corf_sp)
+```
+
+For barrier reef the protective distance is 35000m:
+```{r Set barrier reef protective distance}
+cv_data_buffer_corb = sf::st_buffer(cv_data, 35000)
+cv_data_buffer_corb_sp <- as(cv_data_buffer_corb, "Spatial")
+class(cv_data_buffer_corb_sp)
+```
+
+## B.2/ Calculate the habitat protective value mean
+Then, we import the habitat map rasters with the cv habitat protective rank values created in section A.1:
+```{r Import the rasters with the habitat protective values}
+hra_cv_hab_ranks_fors <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_forest.tif")
+hra_cv_hab_ranks_mang <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_mangroves.tif")
+hra_cv_hab_ranks_seag <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_seagrass.tif")
+hra_cv_hab_ranks_corf <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_nearshore.tif")
+hra_cv_hab_ranks_corb <-raster("E:/GreenFin/02_cv_model/hra_data/2016_habitats/cv_ranks_2020_corals_barrier.tif")
+```
+
+We calculate the habitat protective value mean within the buffers created in A.2:
+For coastal forest:
+```{r Calculate the protective value within the protective distance}
+cv_data$fors <- exact_extract(hra_cv_hab_ranks_fors, cv_data_buffer_fors, "mean")
+cv_data$fors <- round(cv_data$fors, digits = 3) 
+cv_data$fors[cv_data$fors == 'NaN'] <- 5
+```
+
+For mangroves:
+```{r Calculate the protective value within the protective distance}
+cv_data$mang <- exact_extract(hra_cv_hab_ranks_mang, cv_data_buffer_mang, "mean")
+cv_data$mang <- round(cv_data$mang, digits = 3) 
+cv_data$mang[cv_data$mang == 'NaN'] <- 5
+```
+
+For seagrass:
+```{r Calculate the protective value within the protective distance}
+cv_data$seag <- exact_extract(hra_cv_hab_ranks_seag, cv_data_buffer_seag, "mean")
+cv_data$seag <- round(cv_data$seag, digits = 3) 
+cv_data$seag[cv_data$seag == 'NaN'] <- 5
+```
+
+For coral fringing reefs:
+```{r Calculate the protective value within the protective distance}
+cv_data$corf <- exact_extract(hra_cv_hab_ranks_corf, cv_data_buffer_corf, "mean")
+cv_data$corf <- round(cv_data$corf, digits = 3) 
+cv_data$corf[cv_data$corf == 'NaN'] <- 5
+```
+
+For coral barrier reefs: 
+```{r Calculate the protective value within the protective distance}
+cv_data$corb <- exact_extract(hra_cv_hab_ranks_corb, cv_data_buffer_corb, "mean")
+cv_data$corb <- round(cv_data$corb, digits = 3) 
+cv_data$corb[cv_data$corb == 'NaN'] <- 5
+```
+
+## B.3/ Correct the habitat protective value for the barrier reef
+To correct the habitat protective rank values for the barrier reef, we need to import the zones where the barrier reef generates erroneous numbers. We create a new attribute to determine which points should have a value of 5 for the barrier reef attribute only (ie points falling in those regions). We assign 5 to points falling in the regions impacted by barrier reefs and delete the column "barrier":
+
+```{r Correct the barrier reef habitat protective value}
+barrier_reef_correction_layer <-raster("E:/GreenFin/02_cv_model/hra_cv_linkages/barrier_reef_correction_layer.tif")
+plot(barrier_reef_correction_layer)
+cv_data$barrier <- exact_extract(barrier_reef_correction_layer, cv_data, "mean")
+cv_data$barrier <- round(cv_data$barrier, digits = 3)
+cv_data$corb[cv_data$barrier == '5'] <- 5
+names(cv_data)
+cv_data <- cv_data[-c(19)]
+```
+
+## B.4/ Correct the Relief values = 0 to 3 due to DEM
+We also need to correct for the relief values that are equal to 0 and convert those to 3:
+```{r Change relief 0 values to 3}
+cv_data$R_relief[cv_data$R_relief == '0'] <- 3
+```
+
+We export a shapefile and csv file to the folder 2020:
+```{r Export as shp and csv}
+cv_data_sp <- as(cv_data, "Spatial")
+class(cv_data_sp)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_hab_protect_values_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+cv_data_df <- as.data.frame(cv_data_sp)
+names(cv_data_df)
+cv_data_df <- cv_data_df[,-c(18:19)] 
+write.csv(cv_data_df, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_hab_protect_values_w_hra.csv")), row.names = F)
+```
+
+
+# C/ Recompute the habitat rank for each CV point
+Based on equation 15 in the user's guide, we need to recompute the new habitat rank linked HRA 'Rhab' value for that scenario.  
+
+To do so, we need to import cv variables to compute the new habitat rank 
+```{r Import the shp with the new habitat protective values}
+cv_data <- st_read("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020/cv_hab_protect_values_w_hra.shp")
+cv_data_hab_rank <- as.data.frame(cv_data)
+names(cv_data_hab_rank)
+```
+
+For term 0, get the minimum habitat rank across all the habitats:
+```{r Compute term 0}
+min_rank <- apply(cv_data_hab_rank[,c(13:17)], 1, min)
+cv_data_hab_rank <-cbind(cv_data_hab_rank, min_rank)
+rm(min_rank)
+```
+
+For term 1 from equation 15:
+```{r Compute term 1}
+cv_data_hab_rank$term_1 <- (1.5*(5-cv_data_hab_rank$min_rank))^2
+```
+
+For term 2 from equation 15:
+```{r Compute term 2}
+cv_data_hab_rank$term_2 <- ((5-cv_data_hab_rank$corf)^2+
+                            (5-cv_data_hab_rank$mang)^2+
+                            (5-cv_data_hab_rank$seag)^2+
+                            (5-cv_data_hab_rank$fors)^2+
+                            (5-cv_data_hab_rank$corb)^2)
+```
+
+For term 3 from equation 15:
+```{r Compute term 3}
+cv_data_hab_rank$term_3 <- (5-cv_data_hab_rank$min_rank)^2
+```
+
+We calculate the new R_hab using all the terms from equation 15, which incorporates HRA habitats, labeled here as r_hra:
+```{r Compute Equation 15 Habitat Role}
+cv_data_hab_rank$r_hra <- 4.8-0.5*sqrt(cv_data_hab_rank$term_1+cv_data_hab_rank$term_2-cv_data_hab_rank$term_3)
+```
+
+We also add a No habitat role, labeled r_noh, set to 5 to assess the effect of habitat:
+```{r Add a No habitat Role attribute}
+cv_data_hab_rank$r_noh <- 5
+```
+
+Write the csv file
+```{r Export csv results}
+write.csv(cv_data_hab_rank, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_hab_rank_w_hra.csv")), row.names = F)
+```
+
+Select only columns w shore_id and terms from equation 5:
+```{r Export only the terms and results of equation 15}
+names(cv_data_hab_rank)
+cv_data <- cbind(cv_data, cv_data_hab_rank[,c(1,19:24)], by= 'shore_id', how = 'left')
+names(cv_data)
+cv_data <- cv_data[,-c(18,25:26)] # delete the redundant columns
+names(cv_data)
+cv_data_sp <- as(cv_data, "Spatial")
+class(cv_data_sp)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_hab_rank_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+```
+
+# D/ Recompute the exposure index (EI) for each CV point with the corrected Rhab
+
+We recompute the new exposure index:
+```{r Compute the Exposure Index using HRA habitat values}
+cv_data$ei_hra <-(cv_data$r_hra*cv_data$R_wind*cv_data$R_wave*cv_data$R_surge*cv_data$R_relief*cv_data$R_geomorph)^(1/6)
+```
+
+We also compute an na habitat exposure index:
+```{r Compute the Exposure Index using no habitat values}
+cv_data$ei_noh <-(cv_data$r_noh*cv_data$R_wind*cv_data$R_wave*cv_data$R_surge*cv_data$R_relief*cv_data$R_geomorph)^(1/6)
+```
+
+Then we compute the difference to identify places where habitat plays an important protective role
+```{r Compute role of habitat in reducing risk}
+cv_data$hab_role <- cv_data$ei_noh - cv_data$ei_hra
+```
+
+Write the results in a shp and csv formats:
+```{r Export results as shp and csv}
+write.csv(cv_data, file.path("E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", paste("cv_ei_w_hra.csv")), row.names = F)
+cv_data_sp <- as(cv_data, "Spatial")
+class(cv_data_sp)
+writeOGR(obj=cv_data_sp, dsn="E:/GreenFin/02_cv_model/cv_outputs/2016_habitats/2020", layer="cv_ei_w_hra", driver="ESRI Shapefile", overwrite_layer =  T)
+```
+
+Last, clear working environment
+```{r Clear the workspace}
+rm(list = ls(all.names=TRUE))
+```
+
