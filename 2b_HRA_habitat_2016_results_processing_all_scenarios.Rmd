@@ -1,5 +1,5 @@
 ---
-title: "Post-processing & summarizing the outputs from the Habitat Risk Assessment (HRA) model using the habitat maps from 2016"
+title: "Post-processing & summarizing the outputs from the Habitat Risk Assessment (HRA) model using the habitat maps from 2016 and all the scenarios"
 author: "Jade Delevaux"
 created: September 2022
 output:
@@ -29,625 +29,7 @@ library(reshape)
 
 Note: The working directory (WD) needs to reflect your local machine. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
 
-# A/ 2016 Habitat maps & 2016 Human stressors:
-
-HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-## 1/ Coral habitat 
-
-These codes will create three integer raster map for each each risk class of the coral habitat map.
-
-Coral habitat at low, medium, high risk:
-
-```{r Split the risk map for coral habitat into 3 seperate rasters}
-reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_corals.tif")
-risk_corals_none <- reclass_risk_corals==0
-plot(risk_corals_none)
-writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_none_corals.tif", overwrite=TRUE)
-risk_corals_low <- reclass_risk_corals==1
-plot(risk_corals_low)
-writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_low_corals.tif", overwrite=TRUE)
-risk_corals_med <- reclass_risk_corals==2
-plot(risk_corals_med)
-writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_med_corals.tif", overwrite=TRUE)
-risk_corals_hig <- reclass_risk_corals==3
-plot(risk_corals_hig)
-writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_hig_corals.tif", overwrite=TRUE)
-```
-
-## 2/ Seagrass habitat
-
-These codes will create three integer raster map for each each risk class of the seagrass habitat map.
-
-Seagrass habitat at low, medium, and high risk:
-
-```{r Split the risk map for seagrass habitat into 3 seperate rasters}
-reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_seagrass.tif")
-risk_seagrass_none <- reclass_risk_seagrass==0
-plot(risk_seagrass_none)
-writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_none_seagrass.tif", overwrite=TRUE)
-risk_seagrass_low <- reclass_risk_seagrass==1
-plot(risk_seagrass_low)
-writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_low_seagrass.tif", overwrite=TRUE)
-risk_seagrass_med <- reclass_risk_seagrass==2
-plot(risk_seagrass_med)
-writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_med_seagrass.tif", overwrite=TRUE)
-risk_seagrass_hig <- reclass_risk_seagrass==3
-plot(risk_seagrass_hig)
-writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_hig_seagrass.tif", overwrite=TRUE)
-```
-
-## 3/ Mangroves habitat
-
-These codes will create three integer raster map for each each risk class of the mangroves habitat map.
-
-Mangroves habitat at low, medium and high risk:
-
-```{r Split the risk map for mangroves habitat into 3 seperate rasters}
-reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/outputs/RECLASS_RISK_mangroves.tif")
-risk_mangroves_none <- reclass_risk_mangroves==0
-plot(risk_mangroves_none)
-writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_none_mangroves.tif", overwrite=TRUE)
-risk_mangroves_low <- reclass_risk_mangroves==1
-plot(risk_mangroves_low)
-writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_low_mangroves.tif", overwrite=TRUE)
-risk_mangroves_med <- reclass_risk_mangroves==2
-plot(risk_mangroves_med)
-writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_med_mangroves.tif", overwrite=TRUE)
-risk_mangroves_hig <- reclass_risk_mangroves==3
-plot(risk_mangroves_hig)
-writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_hig_mangroves.tif", overwrite=TRUE)
-```
-
-# B/ Habitat 2016 - Stressors 2016: Calculate the habitat area under each risk class per planning unit
-
-Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
-
-## 1/ Coral habitat
-
-We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
-
-```{r Import the coral habitat shapefile subdivided by coastal planning units}
-corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2016.shp")
-```
-
-We run a zonal statistic on each habitat risk raster created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
-corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
-corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
-corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
-corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
-corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
-corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
-corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
-corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
-corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
-corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-corals_sp <- as(corals, "Spatial")
-class(corals_sp)
-writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-corals_risk_summary <- as.data.frame(corals_sp)
-names(corals_risk_summary)
-# Write the csv file
-write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", paste("risk_summary_corals.csv")), row.names = F)
-```
-
-## 2/ Seagrass habitat
-
-We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
-
-```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
-seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
-seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1) 
-seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
-seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
-seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
-seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
-seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
-seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
-seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-seagrass_sp <- as(seagrass, "Spatial")
-class(seagrass_sp)
-writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-seagrass_risk_summary <- as.data.frame(seagrass_sp)
-names(seagrass_risk_summary)
-# Write the csv file
-write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", paste("risk_summary_seagrass.csv")), row.names = F)
-```
-
-## 3/ Mangroves habitat
-
-We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
-
-```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
-mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
-mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1) 
-mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
-mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
-mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
-mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
-mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
-mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
-mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-mangroves_sp <- as(mangroves, "Spatial")
-class(mangroves_sp)
-writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-mangroves_risk_summary <- as.data.frame(mangroves_sp)
-names(mangroves_risk_summary)
-# Write the csv file
-write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016", paste("risk_summary_mangroves.csv")), row.names = F)
-```
-
-We completed this section so we can clear our working environment
-
-```{r Clear the working environment}
-rm(list = ls(all.names=TRUE))
-```
-
-# C/ Habitat 2016 - Stressors 2020: Create a map per habitat risk class
-
-HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-## 1/ Coral habitat 
-
-These codes will create three integer raster map for each each risk class of the coral habitat map.
-
-Coral habitat at low, medium, high risk:
-
-```{r Split the risk map for coral habitat into 3 seperate rasters}
-reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_corals.tif")
-risk_corals_none <- reclass_risk_corals==0
-plot(risk_corals_none)
-writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_none_corals.tif", overwrite=TRUE)
-risk_corals_low <- reclass_risk_corals==1
-plot(risk_corals_low)
-writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_low_corals.tif", overwrite=TRUE)
-risk_corals_med <- reclass_risk_corals==2
-plot(risk_corals_med)
-writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_med_corals.tif", overwrite=TRUE)
-risk_corals_hig <- reclass_risk_corals==3
-plot(risk_corals_hig)
-writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_hig_corals.tif", overwrite=TRUE)
-```
-
-## 2/ Seagrass habitat
-
-These codes will create three integer raster map for each each risk class of the seagrass habitat map.
-
-Seagrass habitat at low, medium, and high risk:
-
-```{r Split the risk map for seagrass habitat into 3 seperate rasters}
-reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_seagrass.tif")
-risk_seagrass_none <- reclass_risk_seagrass==0
-plot(risk_seagrass_none)
-writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_none_seagrass.tif", overwrite=TRUE)
-risk_seagrass_low <- reclass_risk_seagrass==1
-plot(risk_seagrass_low)
-writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_low_seagrass.tif", overwrite=TRUE)
-risk_seagrass_med <- reclass_risk_seagrass==2
-plot(risk_seagrass_med)
-writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_med_seagrass.tif", overwrite=TRUE)
-risk_seagrass_hig <- reclass_risk_seagrass==3
-plot(risk_seagrass_hig)
-writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_hig_seagrass.tif", overwrite=TRUE)
-```
-
-## 3/ Mangroves habitat
-
-These codes will create three integer raster map for each each risk class of the mangroves habitat map.
-
-Mangroves habitat at low, medium and high risk:
-
-```{r Split the risk map for mangroves habitat into 3 seperate rasters}
-reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/outputs/RECLASS_RISK_mangroves.tif")
-risk_mangroves_none <- reclass_risk_mangroves==0
-plot(risk_mangroves_none)
-writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_none_mangroves.tif", overwrite=TRUE)
-risk_mangroves_low <- reclass_risk_mangroves==1
-plot(risk_mangroves_low)
-writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_low_mangroves.tif", overwrite=TRUE)
-risk_mangroves_med <- reclass_risk_mangroves==2
-plot(risk_mangroves_med)
-writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_med_mangroves.tif", overwrite=TRUE)
-risk_mangroves_hig <- reclass_risk_mangroves==3
-plot(risk_mangroves_hig)
-writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020/risk_hig_mangroves.tif", overwrite=TRUE)
-```
-
-# D/ Habitat 2016 - Stressors 2020: Calculate the habitat area under each risk class per planning unit
-
-Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
-
-## 1/ Coral habitat
-
-We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
-
-```{r Import the coral habitat shapefile subdivided by coastal planning units}
-corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
-corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
-corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
-corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
-corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
-corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
-corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
-corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
-corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
-corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
-corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-corals_sp <- as(corals, "Spatial")
-class(corals_sp)
-writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-corals_risk_summary <- as.data.frame(corals_sp)
-names(corals_risk_summary)
-# Write the csv file
-write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", paste("risk_summary_corals.csv")), row.names = F)
-```
-
-## 2/ Seagrass habitat
-
-We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
-
-```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
-seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
-seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1)
-seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
-seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
-seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
-seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
-seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
-seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
-seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-seagrass_sp <- as(seagrass, "Spatial")
-class(seagrass_sp)
-writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-seagrass_risk_summary <- as.data.frame(seagrass_sp)
-names(seagrass_risk_summary)
-# Write the csv file
-write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", paste("risk_summary_seagrass.csv")), row.names = F)
-```
-
-## 3/ Mangroves habitat
-
-We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
-
-```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
-mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
-mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1) 
-mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
-mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
-mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
-mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
-mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
-mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
-mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-mangroves_sp <- as(mangroves, "Spatial")
-class(mangroves_sp)
-writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-mangroves_risk_summary <- as.data.frame(mangroves_sp)
-names(mangroves_risk_summary)
-# Write the csv file
-write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2020", paste("risk_summary_mangroves.csv")), row.names = F)
-```
-
-We completed this section so we can clear our working environment
-
-```{r Clear the working environment}
-rm(list = ls(all.names=TRUE))
-```
-
-# E/ Habitat 2016 - Stressors 2025: Create a map per habitat risk class
-
-HRA outputs a risk raster map for each habitat (corals, seagrass, and mangroves), which classifies the level of risk as: no risk (0), low risk (1), medium risk (2), and high risk (3). To quantify the area (km2) of habitat under each risk level, we need to split the raster per risk level (low, medium, high) for each habitat type.
-
-## 1/ Coral habitat 
-
-These codes will create three integer raster map for each each risk class of the coral habitat map.
-
-Coral habitat at low, medium, high risk:
-
-```{r Split the risk map for coral habitat into 3 seperate rasters}
-reclass_risk_corals <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_corals.tif")
-risk_corals_none <- reclass_risk_corals==0
-plot(risk_corals_none)
-writeRaster(risk_corals_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_none_corals.tif", overwrite=TRUE)
-risk_corals_low <- reclass_risk_corals==1
-plot(risk_corals_low)
-writeRaster(risk_corals_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_low_corals.tif", overwrite=TRUE)
-risk_corals_med <- reclass_risk_corals==2
-plot(risk_corals_med)
-writeRaster(risk_corals_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_med_corals.tif", overwrite=TRUE)
-risk_corals_hig <- reclass_risk_corals==3
-plot(risk_corals_hig)
-writeRaster(risk_corals_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_hig_corals.tif", overwrite=TRUE)
-```
-
-## 2/ Seagrass habitat
-
-These codes will create three integer raster map for each each risk class of the seagrass habitat map.
-
-Seagrass habitat at low, medium, and high risk:
-
-```{r Split the risk map for seagrass habitat into 3 seperate rasters}
-reclass_risk_seagrass <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_seagrass.tif")
-risk_seagrass_none <- reclass_risk_seagrass==0
-plot(risk_seagrass_none)
-writeRaster(risk_seagrass_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_none_seagrass.tif", overwrite=TRUE)
-risk_seagrass_low <- reclass_risk_seagrass==1
-plot(risk_seagrass_low)
-writeRaster(risk_seagrass_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_low_seagrass.tif", overwrite=TRUE)
-risk_seagrass_med <- reclass_risk_seagrass==2
-plot(risk_seagrass_med)
-writeRaster(risk_seagrass_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_med_seagrass.tif", overwrite=TRUE)
-risk_seagrass_hig <- reclass_risk_seagrass==3
-plot(risk_seagrass_hig)
-writeRaster(risk_seagrass_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_hig_seagrass.tif", overwrite=TRUE)
-```
-
-## 3/ Mangroves habitat
-
-These codes will create three integer raster map for each each risk class of the mangroves habitat map.
-
-Mangroves habitat at low, medium and high risk:
-
-```{r Split the risk map for mangroves habitat into 3 seperate rasters}
-reclass_risk_mangroves <- raster("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/outputs/RECLASS_RISK_mangroves.tif")
-risk_mangroves_none <- reclass_risk_mangroves==0
-plot(risk_mangroves_none)
-writeRaster(risk_mangroves_none, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_none_mangroves.tif", overwrite=TRUE)
-risk_mangroves_low <- reclass_risk_mangroves==1
-plot(risk_mangroves_low)
-writeRaster(risk_mangroves_low, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_low_mangroves.tif", overwrite=TRUE)
-risk_mangroves_med <- reclass_risk_mangroves==2
-plot(risk_mangroves_med)
-writeRaster(risk_mangroves_med, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_med_mangroves.tif", overwrite=TRUE)
-risk_mangroves_hig <- reclass_risk_mangroves==3
-plot(risk_mangroves_hig)
-writeRaster(risk_mangroves_hig, filename="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025/risk_hig_mangroves.tif", overwrite=TRUE)
-```
-
-# F/ Habitat 2016 - Stressors 2025: Calculate the habitat area under each risk class per planning unit
-
-Note that to calculate the habitat area we need to multiply the raster values by 0.25 because: 1) we sum the grid cells from HRA at 500m x 500m = 250,000 m2 and 2) we want to convert those values to km2.
-
-## 1/ Coral habitat
-
-We import the coral habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
-
-```{r Import the coral habitat shapefile subdivided by coastal planning units}
-corals <- st_read("E:/GreenFin/01_hra_model/_base/cpu_corals_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of coral habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
-corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
-corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
-corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
-corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
-corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
-corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
-corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
-corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
-corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
-corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1)
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-corals_sp <- as(corals, "Spatial")
-class(corals_sp)
-writeOGR(obj=corals_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", layer="risk_summary_corals", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-corals_risk_summary <- as.data.frame(corals_sp)
-names(corals_risk_summary)
-# Write the csv file
-write.csv(corals_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", paste("risk_summary_corals.csv")), row.names = F)
-```
-
-## 2/ Seagrass habitat
-
-We import the seagrass habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale. 
-
-```{r Import the seagrass habitat shapefile subdivided by coastal planning units}
-seagrass <- st_read("E:/GreenFin/01_hra_model/_base/cpu_seagrass_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of seagrass habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
-seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1)
-seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
-seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
-seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
-seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
-seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
-seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
-seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1) 
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-seagrass_sp <- as(seagrass, "Spatial")
-class(seagrass_sp)
-writeOGR(obj=seagrass_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", layer="risk_summary_seagrass", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-seagrass_risk_summary <- as.data.frame(seagrass_sp)
-names(seagrass_risk_summary)
-# Write the csv file
-write.csv(seagrass_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", paste("risk_summary_seagrass.csv")), row.names = F)
-```
-
-## 3/ Mangroves habitat
-
-We import the mangroves habitat map which was subdivided by coastal planning units so we can summarize the values by planning units and at the country scale.
-
-```{r Import the mangroves habitat shapefile subdivided by coastal planning units}
-mangroves <- st_read("E:/GreenFin/01_hra_model/_base/cpu_mangroves_2016.shp")
-```
-
-We run a zonal statistic on the individual habitat risk rasters created in A.1 to calculate the total area in km2 of mangroves habitat under each risk low, medium, and high, per coastal planning unit.
-
-```{r Calculate the area (km2) of habitat under different risk by plannig unit}
-mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
-mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1)
-mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
-mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
-mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
-mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
-mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
-mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
-```
-
-Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
-```{r Convert the km2 into percent change of the total plannig unit area}
-mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
-mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1) 
-```
-
-We export the shapefile and convert it to a csv table.
-
-```{r Export the shapefile and a csv file}
-mangroves_sp <- as(mangroves, "Spatial")
-class(mangroves_sp)
-writeOGR(obj=mangroves_sp, dsn="E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", layer="risk_summary_mangroves", driver="ESRI Shapefile", overwrite_layer =  T)
-# convert to dataframe
-mangroves_risk_summary <- as.data.frame(mangroves_sp)
-names(mangroves_risk_summary)
-# Write the csv file
-write.csv(mangroves_risk_summary, file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2025", paste("risk_summary_mangroves.csv")), row.names = F)
-```
-
-We completed this section so we can clear our working environment
-
-```{r Clear the working environment}
-rm(list = ls(all.names=TRUE))
-```
-
-# G/ Coral: Combine all the scenarios into 1 dataframe
+# A/ Coral: Combine all the scenarios into 1 dataframe
 
 We import the dataframe summarizing the risk onto coral by scenario (2016,2022,2025):
 
@@ -791,7 +173,7 @@ We completed this section so we can clear our working environment
 rm(list = ls(all.names=TRUE))
 ```
 
-# H/ Seagrass: Combine all the scenarios into 1 dataframe
+# B/ Seagrass: Combine all the scenarios into 1 dataframe
 
 We import the dataframe summarizing the risk onto seagrass by scenario (2016,2022,2025):
 
@@ -935,7 +317,7 @@ We completed this section so we can clear our working environment
 rm(list = ls(all.names=TRUE))
 ```
 
-# I/ Mangroves: Combine all the scenarios into 1 dataframe
+# C/ Mangroves: Combine all the scenarios into 1 dataframe
 
 ```{r Import the mangroves dataframes & split them by km2 and pct}
 mgv_risk_2016 <- read.csv("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats/2016/risk_summary_mangroves.csv") 
@@ -1077,7 +459,7 @@ We completed this section so we can clear our working environment
 rm(list = ls(all.names=TRUE))
 ```
 
-# J/ Create dataframes at Belize scale
+# D/ Create dataframes at Belize scale
 
 Subset the full dataframe to extract the results for the entire country for each habitat type and for the two units (km2 and %): 
 
@@ -1142,7 +524,7 @@ rm(list = ls(all.names=TRUE))
 ```
 
 
-# K/ Create dataframes at coastal planning units scale
+# E/ Create dataframes at coastal planning units scale
 
 Subset the full dataframe to extract the results for the coastal planning units for each habitat type and for the two units (km2 and %): 
 
@@ -1219,7 +601,7 @@ rm(list = ls(all.names=TRUE))
 ```
 
 
-# L/ Calculate functional habitat at the Belize scale
+# F/ Calculate functional habitat at the Belize scale
 
 We calculate the functional habitat for the entire country, for each habitat type:
 
@@ -1293,7 +675,7 @@ We completed this section so we can clear our working environment
 rm(list = ls(all.names=TRUE))
 ```
 
-# M/ Calculate functional habitat at the Coastal Planning Unit scale
+# G/ Calculate functional habitat at the Coastal Planning Unit scale
 
 We calculate the functional habitat by coastal planning unit, for each habitat type:
 
@@ -1367,7 +749,7 @@ We completed this section so we can clear our working environment
 rm(list = ls(all.names=TRUE))
 ```
 
-# N/ Summarize the Habitat Risk results into bar charts:
+# H/ Summarize the Habitat Risk results into bar charts:
 
 Create bar chart habitat risk - Belize scale - Coral
 ```{r Belize scale - Coral habitat risk bar chart}
@@ -2572,7 +1954,7 @@ plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
 
-# O/ Summarize the Functional Habitat results into bar charts:
+# I/ Summarize the Functional Habitat results into bar charts:
 
 Create bar chart functional habitat - Belize scale
 ```{r Belize scale - Functional habitats bar chart}
@@ -2583,23 +1965,18 @@ hab_functional$Habitat <- factor(hab_functional$Habitat,
                               levels = c("Corals", "Mangroves", "Seagrasses"))
 hab_functional$Year <- factor(hab_functional$Year,
                         levels = c("2016", "2020", "2025"))
+hab_functional$km2 <- round(hab_functional$km2)
 habcols <- c("coral", "black", "darkgreen")
 names(habcols) <- c("Corals", "Mangroves", "Seagrasses")
-hab_functional$km2 <- round(hab_functional$km2)
-
 ggbars <- ggplot(hab_functional) +
-geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity") +
+  geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity") +
   scale_fill_manual(values=habcols) +
-  labs(title = "Functional Habitat", x = "", y = bquote("Area "(km^2)),    fill = "Habitats:") +
+  labs(title = "Functional Habitat", x = "", y = bquote("Area "(km^2)), fill = "Habitats:") +
   facet_wrap("Year") +
   geom_text(data=hab_functional,aes(x=Habitat,y=km2,label=km2), 
-            position=position_dodge(width=0.9),vjust=-0.15)
-  my_theme = list(
-    theme_classic()+
-    theme(panel.background = element_blank(),
-        strip.background = element_rect(colour=NA, fill=NA),
-        panel.border = element_blank(),
-        axis.title.x = element_blank(), 
+            position=position_dodge(width=0.9),vjust=-0.15) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
         axis.ticks.x = element_blank(),
         axis.text.x = element_blank(),
         axis.title.y = element_text(size = 12, face="bold"), 
@@ -2607,11 +1984,11 @@ geom_bar(aes(x=Habitat, y=km2, fill=Habitat), position="dodge", stat="identity")
         strip.text.x = element_text(size = 12),
         legend.title = element_text(colour="black", size=12, face="bold"),
         legend.text = element_text(colour="black", size=12),
-        legend.position="bottom"))
-plot_grid(ggbars + my_theme + scale_y_continuous(labels = scales::comma))
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 pdf(file.path("E:/GreenFin/01_hra_model/5_hra_outputs/2016_habitats", paste("Fig_7_barplot_bz_hab_functional.pdf")),
-    width = 5, height = 3.8)
-plot_grid(ggbars + my_theme + scale_y_continuous(labels = scales::comma))
+    width = 5, height = 4.5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
 

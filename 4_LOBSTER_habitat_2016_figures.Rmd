@@ -1,0 +1,175 @@
+---
+title: "Summarize the change of the lobster fishery over time across Belize & its Coastal Planning Units"
+author: "Jade Delevaux"
+created: November 2022
+output:
+  html_document:
+    df_print: paged
+---
+
+To run this script, install the packages below
+
+```{r Install packages needed for this script}
+library(gdalUtilities)
+library(ggplot2)
+library(gridExtra)
+library(cowplot)
+```
+
+Note: The current working directory (WD) is set to my local drive. Use the function "Find and replace" in R studio to replace the root of the working directory by your local path (e.g., "E:/GreenFin") to apply this script. 
+
+## 1/ Create bar chart - lobster tail catch in lbs and bz$ using 2016 habitats:
+
+```{r Make bar chart for lobster tail catch in lbs}
+setwd("E:/GreenFin/04_lobster/lobster_outputs/2016_habitats")
+lobster_outputs <- read.csv("lobster_outputs.csv")
+names(lobster_outputs)
+lobster_outputs$Landings <- factor(lobster_outputs$Landings,  # Change ordering manually
+                                   levels = c("Lobster Tails"))
+# set the order for the years
+lobster_outputs$Year <- factor(lobster_outputs$Year,  # Change ordering manually
+                          levels = c("2025", "2020", "2016"))
+# set the order of planning units (north to south)
+lobster_outputs$cpuwname <- factor(lobster_outputs$cpuwname,  # Change ordering manually
+                              levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+## set custom colors
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(lobster_outputs) +
+  geom_bar(aes(x=cpuwname, y=lbs, fill=Year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Lobster catch", x = "Coastal Planning Units", y = "Pounds (lbs)") +
+  facet_wrap("Landings") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/04_lobster/lobster_outputs/2016_habitats", paste("_barplot_cpu_lobster_outputs_catch.pdf")),
+    width = 6, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for lobster tail catch in $bz}
+setwd("E:/GreenFin/04_lobster/lobster_outputs/2016_habitats")
+# import dataframe
+lobster_outputs <- read.csv("lobster_outputs.csv")
+names(lobster_outputs)
+lobster_outputs$Landings <- factor(lobster_outputs$Landings,  
+                                   levels = c("Lobster Tails"))
+# set the order for the years
+lobster_outputs$Year <- factor(lobster_outputs$Year,  
+                                   levels = c("2025", "2020", "2016"))
+# set the order of planning units (north to south)
+lobster_outputs$cpuwname <- factor(lobster_outputs$cpuwname,  
+                              levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+## set custom colors
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(lobster_outputs) +
+  geom_bar(aes(x=cpuwname, y=bzd, fill=Year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Lobster Tail Revenue", x = "Coastal Planning Units", y = "Revenue (BZ dollars)") +
+  facet_wrap("Landings") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        axis.text.x = element_text(angle = 45, hjust = 0.9, vjust = 1),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/04_lobster/lobster_outputs/2016_habitats", paste("_barplot_cpu_lobster_outputs_revenue.pdf")),
+    width = 6, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+## 2/ Create bar chart - lobster tail catch in lbs and bz$ using 2020 habitats:
+
+```{r Make bar chart for lobster tail catch in lbs}
+setwd("E:/GreenFin/04_lobster/lobster_outputs/2020_habitats")
+lobster_outputs <- read.csv("lobster_outputs.csv")
+names(lobster_outputs)
+lobster_outputs$Landings <- factor(lobster_outputs$Landings,                                   levels = c("Lobster Tails"))
+# set the order for the years
+lobster_outputs$Scenario <- factor(lobster_outputs$Scenario,
+                                   levels = c("2025", "2020", "2016"))
+# set the order of planning units (north to south)
+lobster_outputs$cpuwname <- factor(lobster_outputs$cpuwname,
+                                   levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+## set custom colors
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(lobster_outputs) +
+  geom_bar(aes(x=cpuwname, y=lbs, fill=Scenario), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Lobster catch", x = "Coastal Planning Units", y = "Pounds (lbs)") +
+  facet_wrap("Landings") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/04_lobster/lobster_outputs/2020_habitats", paste("_barplot_cpu_lobster_outputs_catch.pdf")),
+    width = 7, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
+```{r Make bar chart for lobster tail catch in $bz}
+setwd("E:/GreenFin/04_lobster/lobster_outputs/2020_habitats")
+
+# import dataframe
+lobster_outputs <- read.csv("lobster_outputs.csv")
+names(lobster_outputs)
+lobster_outputs$Landings <- factor(lobster_outputs$Landings,  # Change ordering manually
+                                   levels = c("Lobster Tails"))
+# set the order for the years
+lobster_outputs$Scenario <- factor(lobster_outputs$Scenario,  # Change ordering manually
+                                   levels = c("2025", "2020", "2016"))
+
+# set the order of planning units (north to south)
+lobster_outputs$cpuwname <- factor(lobster_outputs$cpuwname,  # Change ordering manually
+                                   levels = c("9-Southern Region","8-South Central Region","7-South Northern Region","6-Lighthouse Reef Atoll","5-Turneffe Atoll","4-Central Region","3-Caye Caulker","2-Ambergris Caye","1-Northern Region"))
+## set custom colors
+year_cols <- c("deepskyblue", "darkorchid", "deeppink")
+names(year_cols) <- c("2016", "2020", "2025")
+
+# build the bar chart
+ggbars <- ggplot(lobster_outputs) +
+  geom_bar(aes(x=cpuwname, y=bzd, fill=Scenario), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Lobster Tail Revenue", x = "Coastal Planning Units", y = "Lobster Tail Revenue (BZ dollars)") +
+  facet_wrap("Landings") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 12, face="bold"), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+pdf(file.path("E:/GreenFin/04_lobster/lobster_outputs/2020_habitats", paste("_barplot_cpu_lobster_outputs_revenue.pdf")),
+    width = 7, height = 5)
+plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
+dev.off()
+
+```
+

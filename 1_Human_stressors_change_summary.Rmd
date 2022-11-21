@@ -39,7 +39,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/agri
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -139,7 +139,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/aqua
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -239,7 +239,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/deve
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -339,7 +339,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/dred
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -439,7 +439,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/fish
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -539,7 +539,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/oil"
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -639,7 +639,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/recr
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -739,7 +739,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/tran
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -839,7 +839,7 @@ dir.create(file.path("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/cons
 
 Import the shapefile with the CPU boundaries
 ```{r Import the coastal planning units shapefile}
-cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer_s.shp")
+cpu_shp <- st_read("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.shp")
 cpu_df <- read.csv("E:/GreenFin/01_hra_model/_base/bz_cp_regions_3km_buffer.csv", header = TRUE, sep = ",")
 ```
 
@@ -1510,7 +1510,7 @@ plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
 
-```{r Make bar chart for development runoff by CPU}
+```{r Make bar chart for development by CPU}
 setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
 # import dataframe
 results <- read.csv("fig_development_delta.csv")
@@ -1769,6 +1769,49 @@ plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
 
+```{r Make bar chart for Conservation by CPU}
+setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
+# import dataframe
+results <- read.csv("fig_conservation_delta.csv")
+# select cpu rows only
+target <- c('1','2','3','4','5','6','7','8','9')
+results <- results[results$cpu %in% target,] 
+results$cpu_nb_name <- paste(results$cpu,results$cpu_name,sep= "-")
+# set the order for the stressors
+results$stressor <- factor(results$stressor,  # Change ordering manually
+                          levels = c("Conservation"))
+# set the order for the years
+results$year <- factor(results$year,  # Change ordering manually
+                          levels = c("2016", "2020", "2025"))
+# set the order of planning units (north to south)
+results$cpu_nb_name <- factor(results$cpu_nb_name, levels = c("1-Northern Region", "2-Ambergris Caye","3-Caye Caulker","4-Central Region","5-Turneffe Atoll","6-Lighthouse Reef Atoll","7-South Northern Region","8-South Central Region","9-Southern Region"))
+# set custom colors
+ year_cols <- c("darkgrey", "grey", "black")
+ names(year_cols) <- c("2016", "2020", "2025")
+# build the bar chart
+ggbars <- ggplot(results) +
+  geom_bar(aes(x=year, y=pct, fill=year), position="dodge", stat="identity") +
+  scale_fill_manual(values=year_cols) +
+  labs(title = "Change in Conservation by Coastal Planning Unit", x = "", y = "Area (%)", fill = "Years:") +
+  facet_wrap("cpu_nb_name", nrow = 3) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 12, face="bold"), 
+        axis.text = element_text(size = 12, color = "black"),
+        strip.text.x = element_text(size = 12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=12),
+        legend.position="bottom")
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+# export and displays as values
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_cpu_conservation.pdf")),
+    width = 8, height = 5)
+plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
+dev.off()
+```
+
 ```{r figure for Belize showing the change in stressors by year}
 setwd("E:/GreenFin/01_hra_model/2_stressor_maps/cpu_analysis/")
 # import dataframe
@@ -1805,7 +1848,7 @@ ggbars <- ggplot(results) +
         legend.position="bottom")
 plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 # export and displays as values
-pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_bz.pdf")),
+pdf(file.path("E:/GreenFin/01_hra_model/2_stressor_maps", paste("_barplot_change_stressors_area_bz_pct.pdf")),
     width = 7, height = 5)
 plot_grid(ggbars + scale_y_continuous(labels = scales::comma))
 dev.off()
