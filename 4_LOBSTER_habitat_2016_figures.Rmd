@@ -75,22 +75,22 @@ year_cols <- c("deepskyblue", "darkorchid", "deeppink")
 names(year_cols) <- c("2016", "2020", "2025")
 # build the bar chart
 ggbars <- ggplot(lobster_outputs) +
-  geom_bar(aes(x=cpuwname, y=bzd, fill=Year), position="dodge", stat="identity") +
+  geom_bar(aes(x=cpuwname, y=bzdx1000, fill=Year), position="dodge", stat="identity") +
   scale_fill_manual(values=year_cols) +
-  labs(title = "Lobster Tail Revenue", x = "Coastal Planning Units", y = "Revenue (BZ dollars)") +
+  labs(title = "Lobster Tail Revenue", x = "Coastal Planning Units", y = "Revenue (BZ$x1,000)") +
   facet_wrap("Landings") +
   theme_bw() +
   theme(axis.title.x = element_text(size = 12, face="bold"), 
         axis.title.y = element_text(size = 12, face="bold"), 
         axis.text = element_text(size = 12, color = "black"),
-        axis.text.x = element_text(angle = 45, hjust = 0.9, vjust = 1),
+#        axis.text.x = element_text(angle = 45, hjust = 0.9, vjust = 1),
         legend.title = element_text(colour="black", size=12, face="bold"),
         legend.text = element_text(colour="black", size=12),
         legend.position="bottom")
 plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
 # export and displays as values
 pdf(file.path("E:/GreenFin/04_lobster/lobster_outputs/2016_habitats", paste("_barplot_cpu_lobster_outputs_revenue.pdf")),
-    width = 6, height = 5)
+    width = 5, height = 5)
 plot_grid(ggbars + coord_flip() + scale_y_continuous(labels = scales::comma))
 dev.off()
 ```
