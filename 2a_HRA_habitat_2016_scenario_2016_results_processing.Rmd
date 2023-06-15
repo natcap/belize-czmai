@@ -115,21 +115,21 @@ We run a zonal statistic on each habitat risk raster created in A.1 to calculate
 
 ```{r Calculate the area (km2) of habitat under different risk by plannig unit}
 corals$non_km2 <- exact_extract(risk_corals_none, corals, 'sum')
-corals$non_km2 <- round(corals$non_km2*0.25, digits = 1)
+corals$non_km2 <- round(corals$non_km2*0.25, digits = 2)
 corals$low_km2 <- exact_extract(risk_corals_low, corals, 'sum')
-corals$low_km2 <- round(corals$low_km2*0.25, digits = 1) 
+corals$low_km2 <- round(corals$low_km2*0.25, digits = 2) 
 corals$med_km2 <- exact_extract(risk_corals_med, corals, 'sum')
-corals$med_km2 <- round(corals$med_km2*0.25, digits = 1) 
+corals$med_km2 <- round(corals$med_km2*0.25, digits = 2) 
 corals$hig_km2 <- exact_extract(risk_corals_hig, corals, 'sum')
-corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 1) 
+corals$hig_km2 <- round(corals$hig_km2*0.25, digits = 2) 
 ```
 
 Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
 ```{r Convert the km2 into percent change of the total plannig unit area}
-corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 1)
-corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 1) 
-corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 1) 
-corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 1) 
+corals$non_pct <- round(corals$non_km2/corals$cpu_km2*100, digits = 2)
+corals$low_pct <- round(corals$low_km2/corals$cpu_km2*100, digits = 2) 
+corals$med_pct <- round(corals$med_km2/corals$cpu_km2*100, digits = 2) 
+corals$hig_pct <- round(corals$hig_km2/corals$cpu_km2*100, digits = 2) 
 ```
 
 We export the shapefile and convert it to a csv table.
@@ -157,21 +157,21 @@ We run a zonal statistic on the individual habitat risk rasters created in A.1 t
 
 ```{r Calculate the area (km2) of habitat under different risk by plannig unit}
 seagrass$non_km2 <- exact_extract(risk_seagrass_none, seagrass, 'sum')
-seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 1) 
+seagrass$non_km2 <- round(seagrass$non_km2*0.25, digits = 2) 
 seagrass$low_km2 <- exact_extract(risk_seagrass_low, seagrass, 'sum')
-seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 1) 
+seagrass$low_km2 <- round(seagrass$low_km2*0.25, digits = 2) 
 seagrass$med_km2 <- exact_extract(risk_seagrass_med, seagrass, 'sum')
-seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 1) 
+seagrass$med_km2 <- round(seagrass$med_km2*0.25, digits = 2) 
 seagrass$hig_km2 <- exact_extract(risk_seagrass_hig, seagrass, 'sum')
-seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 1) 
+seagrass$hig_km2 <- round(seagrass$hig_km2*0.25, digits = 2) 
 ```
 
 Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
 ```{r Convert the km2 into percent change of the total plannig unit area}
-seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 1)
-seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 1) 
-seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 1)
+seagrass$non_pct <- round(seagrass$non_km2/seagrass$cpu_km2*100, digits = 2)
+seagrass$low_pct <- round(seagrass$low_km2/seagrass$cpu_km2*100, digits = 2) 
+seagrass$med_pct <- round(seagrass$med_km2/seagrass$cpu_km2*100, digits = 2) 
+seagrass$hig_pct <- round(seagrass$hig_km2/seagrass$cpu_km2*100, digits = 2)
 ```
 
 We export the shapefile and convert it to a csv table.
@@ -199,21 +199,21 @@ We run a zonal statistic on the individual habitat risk rasters created in A.1 t
 
 ```{r Calculate the area (km2) of habitat under different risk by plannig unit}
 mangroves$non_km2 <- exact_extract(risk_mangroves_none, mangroves, 'sum')
-mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 1) 
+mangroves$non_km2 <- round(mangroves$non_km2*0.25, digits = 2) 
 mangroves$low_km2 <- exact_extract(risk_mangroves_low, mangroves, 'sum')
-mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 1) 
+mangroves$low_km2 <- round(mangroves$low_km2*0.25, digits = 2) 
 mangroves$med_km2 <- exact_extract(risk_mangroves_med, mangroves, 'sum')
-mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 1) 
+mangroves$med_km2 <- round(mangroves$med_km2*0.25, digits = 2) 
 mangroves$hig_km2 <- exact_extract(risk_mangroves_hig, mangroves, 'sum')
-mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 1) 
+mangroves$hig_km2 <- round(mangroves$hig_km2*0.25, digits = 2) 
 ```
 
 Then we convert the total km2 of habitat under different risk class into percent change from the total coastal planning unit area.
 ```{r Convert the km2 into percent change of the total plannig unit area}
-mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 1)
-mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 1) 
-mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 1)  
+mangroves$non_pct <- round(mangroves$non_km2/mangroves$cpu_km2*100, digits = 2)
+mangroves$low_pct <- round(mangroves$low_km2/mangroves$cpu_km2*100, digits = 2) 
+mangroves$med_pct <- round(mangroves$med_km2/mangroves$cpu_km2*100, digits = 2) 
+mangroves$hig_pct <- round(mangroves$hig_km2/mangroves$cpu_km2*100, digits = 2)  
 ```
 
 We export the shapefile and convert it to a csv table.
